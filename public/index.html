@@ -727,6 +727,174 @@ body {
   min-height: 320px;
 }
 
+.chat-container {
+  display: flex;
+  flex: 1;
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+.conversations-sidebar {
+  width: 200px;
+  border-right: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.conversations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.conversations-header h4 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.new-conv-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.new-conv-btn:hover {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.conversations-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-1) 0;
+}
+
+.conversation-item {
+  padding: var(--space-2);
+  margin: var(--space-1) var(--space-1);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: var(--color-surface);
+  border: 1px solid transparent;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  transition: all var(--duration-fast) var(--ease-out);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  position: relative;
+}
+
+.conversation-item:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-text-primary);
+}
+
+.conversation-item.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.conversation-item-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conversation-item-del {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity var(--duration-fast);
+}
+
+.conversation-item:hover .conversation-item-del {
+  opacity: 1;
+}
+
+.conversation-item-del:hover {
+  color: #EF4444;
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--color-border-light);
+  gap: var(--space-2);
+}
+
+.chat-header h3 {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--color-text-primary);
+  flex: 1;
+}
+
+.chat-actions {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.chat-actions select {
+  padding: 4px 8px;
+  font-size: var(--text-xs);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+.chat-actions button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.chat-actions button:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-text-secondary);
+}
+
+
 .chat-status {
   width: 8px;
   height: 8px;
@@ -867,6 +1035,35 @@ body {
   font-family: var(--font-mono);
   white-space: pre-wrap;
   word-break: break-all;
+}
+
+.chat-delete-btn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #EF4444;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 150ms ease-out;
+  margin-right: var(--space-1);
+}
+
+.chat-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  transform: scale(1.05);
+}
+
+.chat-msg:hover .chat-delete-btn {
+  display: flex;
 }
 
 .chat-input-row {
@@ -1213,22 +1410,38 @@ body {
       <!-- AI 排期面板 -->
       <div class="right-panel" id="rightPanelChat">
         <div class="card chat-panel">
-          <h3>AI 排期助手</h3>
-          <div class="chat-config">
-            <label>模型</label>
-            <select id="chatModel">
-              <option value="deepseek-chat">DeepSeek V3</option>
-              <option value="deepseek-reasoner">DeepSeek R1</option>
-            </select>
-            <button onclick="checkChatHealth()">测试连接</button>
-            <button onclick="clearChat()">清空对话</button>
-          </div>
-          <div class="chat-messages" id="chatMessages">
-            <div class="chat-msg assistant">你好，我是 AI 排期助手。可以帮你：<br>· 查看各版本排期详情<br>· 添加或删除假期区间<br>· 调整排期基准参数<br>· 回答排期相关问题<br><br>请问有什么可以帮你的？</div>
-          </div>
-          <div class="chat-input-row">
-            <textarea id="chatInput" rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行…" onkeydown="handleChatKey(event)"></textarea>
-            <button class="primary" id="chatSendBtn" onclick="sendChat()">发送</button>
+          <div class="chat-container">
+            <!-- 左侧: 对话列表 -->
+            <div class="conversations-sidebar">
+              <div class="conversations-header">
+                <h4>对话</h4>
+                <button class="new-conv-btn" onclick="createNewConversation()" title="新建对话">+</button>
+              </div>
+              <div class="conversations-list" id="conversationsList"></div>
+            </div>
+
+            <!-- 右侧: 消息和输入 -->
+            <div class="chat-main">
+              <div class="chat-header">
+                <h3 id="conversationTitle">AI 排期助手</h3>
+                <div class="chat-actions">
+                  <select id="chatModel">
+                    <option value="deepseek-chat">DeepSeek V3</option>
+                    <option value="deepseek-reasoner">DeepSeek R1</option>
+                  </select>
+                  <button onclick="checkChatHealth()" title="测试连接">🔌</button>
+                  <button onclick="clearChat()" title="清空对话">🗑️</button>
+                  <button onclick="deleteCurrentConversation()" title="删除对话">❌</button>
+                </div>
+              </div>
+              <div class="chat-messages" id="chatMessages">
+                <div class="chat-msg assistant">你好，我是 AI 排期助手。可以帮你：<br>· 查看各版本排期详情<br>· 添加或删除假期区间<br>· 调整排期基准参数<br>· 回答排期相关问题<br><br>请问有什么可以帮你的？</div>
+              </div>
+              <div class="chat-input-row">
+                <textarea id="chatInput" rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行…" onkeydown="handleChatKey(event)"></textarea>
+                <button class="primary" id="chatSendBtn" onclick="sendChat()">发送</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2097,14 +2310,144 @@ async function removeNoReleaseItem(i) {
 }
 
 // ===== AI 对话面板 =====
+let currentConversationId = null;
+let conversations = [];
 let chatMessages = [
   {role: 'assistant', content: '你好，我是 AI 排期助手。可以帮你：\n· 查看各版本排期详情\n· 添加或删除假期区间\n· 调整排期基准参数\n· 回答排期相关问题\n\n请问有什么可以帮你的？'}
 ];
 let chatBusy = false;
 
-function clearChat() {
+async function loadConversations() {
+  try {
+    const r = await fetch(API + '/api/conversations');
+    if (r.ok) {
+      conversations = await r.json();
+      renderConversationsList();
+      if (conversations.length === 0) {
+        await createNewConversation('默认对话');
+        return;
+      }
+      if (!currentConversationId && conversations.length > 0) {
+        await switchConversation(conversations[0].id);
+      }
+    }
+  } catch (e) {
+    console.warn('无法加载对话列表:', e.message);
+  }
+}
+
+async function createNewConversation(defaultTitle) {
+  const title = defaultTitle || prompt('请输入对话名称:', '新对话');
+  if (!title) return;
+  try {
+    const r = await fetch(API + '/api/conversations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    });
+    const data = await r.json();
+    if (data.ok) {
+      await loadConversations();
+      await switchConversation(data.id);
+    }
+  } catch (e) {
+    console.warn('创建对话失败:', e.message);
+  }
+}
+
+async function switchConversation(id) {
+  currentConversationId = id;
+  const conv = conversations.find(c => c.id === id);
+  if (conv) {
+    document.getElementById('conversationTitle').textContent = conv.title;
+  }
+  await loadChatHistory();
+  renderConversationsList();
+}
+
+async function deleteCurrentConversation() {
+  if (!currentConversationId) return;
+  if (!confirm('确定要删除这个对话吗？此操作无法撤销。')) return;
+  try {
+    await fetch(API + '/api/conversations/' + currentConversationId, { method: 'DELETE' });
+    await loadConversations();
+  } catch (e) {
+    console.warn('删除对话失败:', e.message);
+  }
+}
+
+function renderConversationsList() {
+  const el = document.getElementById('conversationsList');
+  el.innerHTML = conversations.map(conv => `
+    <div class="conversation-item ${conv.id === currentConversationId ? 'active' : ''}" onclick="switchConversation(${conv.id})">
+      <span class="conversation-item-title">${conv.title}</span>
+      <button class="conversation-item-del" onclick="event.stopPropagation(); deleteConversationItem(${conv.id})">×</button>
+    </div>
+  `).join('');
+}
+
+async function deleteConversationItem(id) {
+  if (!confirm('确定要删除这个对话吗？')) return;
+  try {
+    await fetch(API + '/api/conversations/' + id, { method: 'DELETE' });
+    if (id === currentConversationId) {
+      await loadConversations();
+    } else {
+      conversations = conversations.filter(c => c.id !== id);
+      renderConversationsList();
+    }
+  } catch (e) {
+    console.warn('删除对话失败:', e.message);
+  }
+}
+
+async function loadChatHistory() {
+  try {
+    if (!currentConversationId) return;
+    const r = await fetch(API + '/api/chat-messages?conversation_id=' + currentConversationId);
+    if (r.ok) {
+      const data = await r.json();
+      if (data.length > 0) {
+        chatMessages = data.map(m => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          toolCalls: m.tool_calls,
+          label: m.label,
+        }));
+      } else {
+        chatMessages = [{role: 'assistant', content: '你好！有什么可以帮你的吗？'}];
+      }
+      renderChatMessages();
+    }
+  } catch (e) {
+    console.warn('无法加载对话历史:', e.message);
+  }
+}
+
+async function saveChatMessage(role, content, toolCalls, label) {
+  try {
+    if (!currentConversationId) return;
+    await fetch(API + '/api/chat-messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ conversation_id: currentConversationId, role, content, tool_calls: toolCalls, label }),
+    });
+  } catch (e) {
+    console.warn('无法保存对话:', e.message);
+  }
+}
+
+async function clearChat() {
+  if (!confirm('确定要清空这个对话的所有消息吗？此操作无法撤销。')) return;
+  try {
+    if (!currentConversationId) return;
+    await fetch(API + '/api/chat-messages?conversation_id=' + currentConversationId, { method: 'DELETE' });
+  } catch (e) {
+    console.warn('无法清空对话历史:', e.message);
+  }
   chatMessages = [
-    {role: 'assistant', content: '对话已清空。有什么可以帮你的？'}
+    {role: 'assistant', content: '对话已清空。有什么可以帮你的吗？'}
   ];
   renderChatMessages();
 }
@@ -2116,14 +2459,28 @@ function handleChatKey(e) {
   }
 }
 
+async function deleteChatMessage(id) {
+  try {
+    await fetch(API + '/api/chat-messages/' + id, { method: 'DELETE' });
+    chatMessages = chatMessages.filter(m => m.id !== id);
+    renderChatMessages();
+  } catch (e) {
+    console.warn('删除消息失败:', e.message);
+  }
+}
+
 function renderChatMessages() {
   const el = document.getElementById('chatMessages');
-  el.innerHTML = chatMessages.map(m => {
+  el.innerHTML = chatMessages.map((m, idx) => {
+    let delBtn = '';
+    if (m.id) {
+      delBtn = `<button class="chat-delete-btn" onclick="deleteChatMessage(${m.id})" title="删除此消息">×</button>`;
+    }
     if (m.role === 'tool') {
-      return `<div class="chat-msg tool"><details><summary>工具: ${m.label || '执行操作'}</summary><div class="tool-detail">${m.content}</div></details></div>`;
+      return `<div class="chat-msg tool">${delBtn}<details><summary>工具: ${m.label || '执行操作'}</summary><div class="tool-detail">${m.content}</div></details></div>`;
     }
     const cls = m.role === 'user' ? 'user' : 'assistant';
-    return `<div class="chat-msg ${cls}">${m.content.replace(/\n/g, '<br>')}</div>`;
+    return `<div class="chat-msg ${cls}">${delBtn}<span>${m.content.replace(/\n/g, '<br>')}</span></div>`;
   }).join('');
   el.scrollTop = el.scrollHeight;
 }
@@ -2133,7 +2490,7 @@ async function checkChatHealth() {
   const statusEl = document.getElementById('chatStatus');
   statusEl.className = 'chat-status offline';
   try {
-    const r = await fetch('http://localhost:3456/api/health', {signal: AbortSignal.timeout(5000)});
+    const r = await fetch(API + '/api/health', {signal: AbortSignal.timeout(5000)});
     if (r.ok) {
       statusEl.className = 'chat-status online';
       addChatMsg('assistant', '✅ 代理连接成功！可以开始对话。');
@@ -2143,13 +2500,15 @@ async function checkChatHealth() {
     }
   } catch(e) {
     statusEl.className = 'chat-status offline';
-    addChatMsg('assistant', '❌ 无法连接代理服务器（localhost:3456），请先运行 `node server.js`。');
+    addChatMsg('assistant', '❌ 无法连接 API 代理，请检查 Vercel 部署或本地服务是否正常。');
   }
 }
 
 function addChatMsg(role, content, label) {
-  chatMessages.push({role, content, label});
+  const msg = {role, content, label};
+  chatMessages.push(msg);
   renderChatMessages();
+  saveChatMessage(role, content, null, label);
 }
 
 function buildSystemPrompt() {
@@ -2291,7 +2650,7 @@ async function sendChat() {
     try {
       const model = document.getElementById('chatModel').value;
 
-      const resp = await fetch('http://localhost:3456/api/chat', {
+      const resp = await fetch(API + '/api/chat', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
@@ -2319,8 +2678,10 @@ async function sendChat() {
       const toolCalls = msg.tool_calls || [];
 
       if (toolCalls.length > 0) {
-        chatMessages.push({role: 'assistant', content: textContent, toolCalls: toolCalls});
+        const msg = {role: 'assistant', content: textContent, toolCalls: toolCalls};
+        chatMessages.push(msg);
         renderChatMessages();
+        saveChatMessage('assistant', textContent, toolCalls);
 
         for (const tc of toolCalls) {
           const fn = tc.function;
@@ -2337,11 +2698,14 @@ async function sendChat() {
         }
         continue;
       } else {
-        addChatMsg('assistant', textContent);
+        const msg = {role: 'assistant', content: textContent};
+        chatMessages.push(msg);
+        renderChatMessages();
+        saveChatMessage('assistant', textContent);
         break;
       }
     } catch(e) {
-      addChatMsg('assistant', '❌ 连接失败: ' + e.message + '\n请确认已启动 `node server.js`');
+    addChatMsg('assistant', '❌ 连接失败: ' + e.message + '\n请确认 Vercel 环境变量和 API 路由已配置正确');
       document.getElementById('chatStatus').className = 'chat-status offline';
       break;
     }
@@ -2473,6 +2837,7 @@ async function sendReminder() {
 (async function init() {
   await loadFromServer();
   loadEmailConfig();
+  await loadConversations();
   renderPersonEditor();
   allVersions = buildVersions();
   buildEventMap();
