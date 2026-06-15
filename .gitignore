@@ -3,3 +3,5 @@ node_modules/
 db/calendar.db
 _tmp_script.js
 *.patch.js
+db/
+prisma/db/
