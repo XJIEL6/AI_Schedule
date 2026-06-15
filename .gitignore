@@ -1,0 +1,5 @@
+node_modules/
+.env
+db/calendar.db
+_tmp_script.js
+*.patch.js

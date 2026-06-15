@@ -1,0 +1,18 @@
+{
+  "name": "release-calendar",
+  "version": "2.0.0",
+  "description": "1号会员店发版日历 - 前后端一体化",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.0",
+    "sql.js": "^1.12.0"
+  }
+}

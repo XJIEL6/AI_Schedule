@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1号会员店发版日历</title>
+<style>
+/* ===== CSS Custom Properties ===== */
+:root {
+  /* ── Color System ── */
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-primary-light: #EFF6FF;
+  --color-primary-border: #BFDBFE;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FFFBEB;
+  --color-warning-border: #FDE68A;
+  --color-success: #10B981;
+  --color-success-light: #ECFDF5;
+  --color-success-border: #A7F3D0;
+  --color-danger: #EF4444;
+  --color-danger-light: #FEF2F2;
+  --color-danger-border: #FECACA;
+
+  /* Neutral palette (Slate) */
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F1F5F9;
+  --color-surface-hover: #E2E8F0;
+  --color-border-light: #E2E8F0;
+  --color-border: #CBD5E1;
+  --color-border-strong: #94A3B8;
+  --color-text-disabled: #94A3B8;
+  --color-text-secondary: #64748B;
+  --color-text-body: #475569;
+  --color-text-primary: #1E293B;
+  --color-text-heading: #0F172A;
+
+  /* ── Semantic Preserved Colors ── */
+  --ev-brd-init-bg: #DBEAFE;   --ev-brd-init-text: #1D4ED8;
+  --ev-brd-final-bg: #EDE9FE;  --ev-brd-final-text: #6D28D9;
+  --ev-prd-init-bg: #D1FAE5;   --ev-prd-init-text: #065F46;
+  --ev-prd-final-bg: #BBF7D0;  --ev-prd-final-text: #047857;
+  --ev-prd-order-bg: #FEF3C7;  --ev-prd-order-text: #92400E;
+  --ev-prd-search-bg: #FDE68A; --ev-prd-search-text: #78350F;
+  --ev-schedule-bg: #DBEAFE;   --ev-schedule-text: #1E40AF;
+  --ev-dev-bg: #E0F2FE;        --ev-dev-text: #0369A1;
+  --ev-test-bg: #FCE7F3;       --ev-test-text: #9D174D;
+  --ev-regression-bg: #FEE2E2; --ev-regression-text: #991B1B;
+  --ev-gray-bg: #F3F4F6;       --ev-gray-text: #374151;
+  --ev-android-bg: #DCFCE7;    --ev-android-text: #166534;
+  --ev-launch-bg: #6EE7B7;     --ev-launch-text: #064E3B;
+
+  /* ── Typography ── */
+  --font-sans: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, monospace;
+  --text-xs: 0.6875rem;   /* 11px */
+  --text-sm: 0.75rem;     /* 12px */
+  --text-base: 0.8125rem; /* 13px */
+  --text-md: 0.875rem;    /* 14px */
+  --text-lg: 1rem;        /* 16px */
+  --text-xl: 1.125rem;    /* 18px */
+  --text-2xl: 1.5rem;     /* 24px */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* ── Spacing (4px base) ── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* ── Border Radius ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 4px 12px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+
+  /* ── Transitions ── */
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+}
+
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text-body);
+  line-height: var(--leading-normal);
+  min-height: 100vh;
+}
+
+/* ===== Container ===== */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+}
+
+/* ===== Header ===== */
+.page-header {
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.page-header h2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text-heading);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.page-header h2::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 22px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+.page-header .subtitle {
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+  margin-left: calc(var(--space-2) + 4px);
+}
+
+/* ===== Main Layout ===== */
+.main-layout {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+}
+
+.main-left {
+  flex: 0 0 58%;
+  min-width: 0;
+}
+
+.main-right {
+  flex: 1;
+  min-width: 340px;
+  position: sticky;
+  top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ===== Month Navigation ===== */
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.month-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-light);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: var(--text-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  user-select: none;
+}
+
+.month-nav button:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+}
+
+.month-nav button:active {
+  transform: scale(0.95);
+  background: var(--color-surface-hover);
+}
+
+.month-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text-heading);
+  min-width: 120px;
+  text-align: center;
+}
+
+.month-nav .nav-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-disabled);
+  margin-left: auto;
+}
+
+/* ===== Calendar Grid ===== */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-bottom: var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  padding: var(--space-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.cal-header {
+  text-align: center;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  padding: var(--space-2) var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cal-header:nth-child(1),
+.cal-header:nth-child(7) {
+  color: var(--color-text-disabled);
+}
+
+.cal-day {
+  min-height: 78px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  padding: 5px 6px;
+  position: relative;
+  background: var(--color-surface);
+  transition: all var(--duration-fast) var(--ease-out);
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cal-day:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+  z-index: 1;
+}
+
+.cal-day.other-month {
+  background: var(--color-surface-alt);
+  opacity: 0.45;
+}
+
+.cal-day.other-month:hover {
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.cal-day.weekend {
+  background: #FAFBFC;
+}
+
+.cal-day.weekend:hover {
+  background: #F1F5F9;
+}
+
+.cal-day.holiday {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+}
+
+.cal-day.holiday:hover {
+  background: #FEF3C7;
+  border-color: #FCD34D;
+}
+
+.cal-day.today {
+  border: 2px solid var(--color-primary) !important;
+  background: var(--color-primary-light);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.day-num {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: 3px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.day-num.holiday-num {
+  color: #D97706;
+  font-weight: 600;
+}
+
+/* ===== Event Tags ===== */
+.event {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-bottom: 2px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.cal-day:hover .event {
+  opacity: 0.9;
+}
+
+/* Event semantic colors */
+.ev-brd-init   { background: var(--ev-brd-init-bg);   color: var(--ev-brd-init-text); }
+.ev-brd-final  { background: var(--ev-brd-final-bg);  color: var(--ev-brd-final-text); }
+.ev-prd-init   { background: var(--ev-prd-init-bg);   color: var(--ev-prd-init-text); }
+.ev-prd-final  { background: var(--ev-prd-final-bg);  color: var(--ev-prd-final-text); }
+.ev-prd-order  { background: var(--ev-prd-order-bg);  color: var(--ev-prd-order-text); }
+.ev-prd-search { background: var(--ev-prd-search-bg); color: var(--ev-prd-search-text); }
+.ev-schedule   { background: var(--ev-schedule-bg);   color: var(--ev-schedule-text); }
+.ev-dev        { background: var(--ev-dev-bg);        color: var(--ev-dev-text); }
+.ev-test       { background: var(--ev-test-bg);       color: var(--ev-test-text); }
+.ev-regression { background: var(--ev-regression-bg); color: var(--ev-regression-text); }
+.ev-gray       { background: var(--ev-gray-bg);       color: var(--ev-gray-text); border: 0.5px solid #D1D5DB; }
+.ev-android    { background: var(--ev-android-bg);    color: var(--ev-android-text); }
+.ev-launch     { background: var(--ev-launch-bg);     color: var(--ev-launch-text); font-weight: 600; }
+
+/* ===== Legend ===== */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.leg-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ===== Version Tabs ===== */
+/* Filter bar */
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.version-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.version-tab {
+  padding: 5px 14px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  transition: all var(--duration-fast) var(--ease-out);
+  box-shadow: var(--shadow-sm);
+}
+
+.version-tab:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.version-tab:active {
+  transform: scale(0.96);
+}
+
+.version-tab.active {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+/* ===== Right Tabs (Holiday / Chat Switch) ===== */
+.right-tabs {
+  display: flex;
+  gap: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.right-tab {
+  flex: 1;
+  text-align: center;
+  padding: 9px 0;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  transition: all var(--duration-fast) var(--ease-out);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.right-tab:first-child {
+  border-right: 1px solid var(--color-border-light);
+}
+
+.right-tab:hover:not(.active) {
+  background: var(--color-surface-alt);
+  color: var(--color-text-primary);
+}
+
+.right-tab.active {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* ===== Right Panels ===== */
+.right-panel {
+  display: none;
+  animation: fadeSlideIn var(--duration-normal) var(--ease-out);
+}
+
+.right-panel.show {
+  display: block;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Cards ===== */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.card h3 {
+  font-size: var(--text-md);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-heading);
+}
+
+/* ===== Holiday Management Panel ===== */
+.holiday-panel {}
+.holiday-panel h3 {
+  font-size: var(--text-md);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-heading);
+}
+
+/* ── Management Section ── */
+.mgmt-section {
+  margin-bottom: var(--space-3);
+}
+.mgmt-section:last-child { margin-bottom: 0; }
+
+.mgmt-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-2);
+}
+
+.mgmt-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.mgmt-row input[type="date"] {
+  padding: 6px 10px;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.mgmt-row input[type="date"]:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.mgmt-row .date-sep {
+  font-size: var(--text-xs);
+  color: var(--color-text-disabled);
+  flex-shrink: 0;
+}
+
+.btn {
+  padding: 6px 12px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  transition: all var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border-strong);
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border-color: var(--color-primary);
+  font-weight: 500;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.btn-danger {
+  background: var(--color-danger-light);
+  color: #991B1B;
+  border-color: var(--color-danger-border);
+}
+
+.btn-danger:hover {
+  background: #FEE2E2;
+}
+
+.btn-warn {
+  background: var(--color-warning-light);
+  color: #92400E;
+  border-color: var(--color-warning-border);
+}
+
+.btn-warn:hover {
+  background: #FEF3C7;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--color-text-disabled);
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.btn-ghost:hover {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
+}
+
+/* ── Rule Display Section ── */
+.rules-section {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.rules-section-header {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-2);
+}
+
+.rule-group {
+  margin-bottom: var(--space-3);
+}
+
+.rule-group:last-child { margin-bottom: 0; }
+
+.rule-group-title {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-disabled);
+  margin-bottom: var(--space-1);
+  padding-left: 2px;
+}
+
+.rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 140px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.rule-list::-webkit-scrollbar { width: 5px; }
+.rule-list::-webkit-scrollbar-track { background: transparent; }
+.rule-list::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.rule-item:hover {
+  background: var(--color-surface-alt);
+}
+
+.rule-item.holiday { border-left: 3px solid var(--color-danger); }
+.rule-item.makeup { border-left: 3px solid var(--color-success); }
+.rule-item.norelease { border-left: 3px solid #6B7280; }
+
+.rule-item-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.rule-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+
+.rule-badge.holiday { background: var(--color-danger-light); color: #991B1B; }
+.rule-badge.makeup  { background: var(--color-success-light); color: #065F46; }
+.rule-badge.norelease { background: #F3F4F6; color: #374151; }
+
+.rule-item-text {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rule-empty {
+  font-size: var(--text-sm);
+  color: var(--color-text-disabled);
+  padding: var(--space-3);
+  text-align: center;
+}
+
+/* ===== Chat Panel ===== */
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+}
+
+.chat-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.chat-status.online {
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.chat-status.offline {
+  background: #D1D5DB;
+}
+
+.chat-config {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-sm);
+}
+
+.chat-config label {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.chat-config select,
+.chat-config input {
+  padding: 5px 8px;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.chat-config select:focus,
+.chat-config input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.chat-config button {
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.chat-config button:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-text-primary);
+}
+
+.chat-messages {
+  flex: 1;
+  max-height: 320px;
+  min-height: 120px;
+  overflow-y: auto;
+  margin-bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.chat-messages::-webkit-scrollbar { width: 5px; }
+.chat-messages::-webkit-scrollbar-track { background: transparent; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
+
+.chat-msg {
+  max-width: 88%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  word-break: break-word;
+  animation: msgIn 200ms var(--ease-out);
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.chat-msg.user {
+  align-self: flex-end;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-msg.assistant {
+  align-self: flex-start;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-msg.tool {
+  align-self: flex-start;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  font-size: var(--text-xs);
+  border-radius: var(--radius-sm);
+}
+
+.chat-msg.tool summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #92400E;
+  user-select: none;
+}
+
+.chat-msg.tool .tool-detail {
+  margin-top: var(--space-1);
+  font-size: 10px;
+  color: #78350F;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+
+.chat-input-row textarea {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  resize: none;
+  min-height: 36px;
+  max-height: 80px;
+  font-family: var(--font-sans);
+  line-height: var(--leading-normal);
+  transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.chat-input-row textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.chat-input-row button {
+  padding: 8px 16px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  white-space: nowrap;
+  transition: all var(--duration-fast) var(--ease-out);
+}
+
+.chat-input-row button:hover {
+  background: var(--color-surface-alt);
+}
+
+.chat-input-row button:active {
+  transform: scale(0.96);
+}
+
+.chat-input-row button.primary {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border-color: var(--color-primary);
+}
+
+.chat-input-row button.primary:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.chat-input-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.chat-typing {
+  font-size: var(--text-xs);
+  color: var(--color-text-disabled);
+  padding: var(--space-1) var(--space-3);
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-typing::after {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: typingDot 1.4s infinite;
+  box-shadow: 8px 0 0 currentColor, 16px 0 0 currentColor;
+}
+
+@keyframes typingDot {
+  0%, 60%, 100% { opacity: 0.3; }
+  30% { opacity: 1; }
+}
+
+/* ===== Version Detail Card ===== */
+.version-info {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  animation: fadeSlideIn var(--duration-normal) var(--ease-out);
+}
+
+.version-info h3 {
+  font-size: var(--text-md);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-heading);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.vi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--text-sm);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.vi-row:hover {
+  background: var(--color-surface-alt);
+  margin: 0 calc(-1 * var(--space-5));
+  padding-left: var(--space-5);
+  padding-right: var(--space-5);
+}
+
+.vi-row:last-child { border-bottom: none; }
+
+.vi-label {
+  color: var(--color-text-secondary);
+  flex: 0 0 150px;
+  font-weight: 500;
+}
+
+.vi-val {
+  color: var(--color-text-primary);
+  text-align: right;
+  flex: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== All Versions Summary ===== */
+.all-versions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .main-layout {
+    flex-direction: column;
+  }
+  .main-left {
+    flex: none;
+    width: 100%;
+  }
+  .main-right {
+    flex: none;
+    width: 100%;
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-4) var(--space-3);
+  }
+  .page-header h2 {
+    font-size: var(--text-xl);
+  }
+  .cal-day {
+    min-height: 58px;
+    padding: 3px 4px;
+  }
+  .event {
+    font-size: 9px;
+    padding: 0px 3px;
+  }
+  .legend {
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-2);
+  }
+  .leg-item {
+    font-size: 10px;
+  }
+  .main-right {
+    min-width: 0;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ===== Header ===== -->
+  <div class="page-header">
+    <h2>1号会员店发版日历</h2>
+  </div>
+
+  <div class="main-layout">
+
+    <!-- ===== 左侧：日历 ===== -->
+    <div class="main-left">
+      <div class="month-nav">
+        <button onclick="prevYear()" aria-label="上一年" title="上一年">◀</button>
+        <button onclick="prevMonth()" aria-label="上一月">←</button>
+        <span class="month-title" id="monthTitle"></span>
+        <button onclick="nextMonth()" aria-label="下一月">→</button>
+        <button onclick="nextYear()" aria-label="下一年" title="下一年">▶</button>
+        <select id="yearSelect" onchange="jumpToYear()" style="margin-left:auto;padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--color-border-light);background:var(--color-surface);color:var(--color-text-primary);">
+          <option value="2026">2026年</option>
+        </select>
+        <select id="monthSelect" onchange="jumpToMonth()" style="padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--color-border-light);background:var(--color-surface);color:var(--color-text-primary);">
+          <option value="0">1月</option><option value="1">2月</option><option value="2">3月</option><option value="3">4月</option><option value="4">5月</option><option value="5">6月</option><option value="6">7月</option><option value="7">8月</option><option value="8">9月</option><option value="9">10月</option><option value="10">11月</option><option value="11">12月</option>
+        </select>
+      </div>
+
+      <div class="calendar-grid" id="calGrid">
+        <!-- Headers rendered by JS -->
+        <div class="cal-header">日</div>
+        <div class="cal-header">一</div>
+        <div class="cal-header">二</div>
+        <div class="cal-header">三</div>
+        <div class="cal-header">四</div>
+        <div class="cal-header">五</div>
+        <div class="cal-header">六</div>
+      </div>
+
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot ev-brd-init"></div>BRD初评</div>
+        <div class="leg-item"><div class="leg-dot ev-brd-final"></div>BRD终评</div>
+        <div class="leg-item"><div class="leg-dot ev-prd-init"></div>内部PRD初评</div>
+        <div class="leg-item"><div class="leg-dot ev-prd-final"></div>内部PRD终评</div>
+        <div class="leg-item"><div class="leg-dot ev-prd-order"></div>PRD终评(订单)</div>
+        <div class="leg-item"><div class="leg-dot ev-prd-search"></div>PRD终评(搜推)</div>
+        <div class="leg-item"><div class="leg-dot ev-schedule"></div>输出排期</div>
+        <div class="leg-item"><div class="leg-dot ev-dev"></div>开发</div>
+        <div class="leg-item"><div class="leg-dot ev-test"></div>测试</div>
+        <div class="leg-item"><div class="leg-dot ev-regression"></div>客户端回归</div>
+        <div class="leg-item"><div class="leg-dot ev-gray"></div>灰度</div>
+        <div class="leg-item"><div class="leg-dot ev-android"></div>安卓/鸿蒙提审</div>
+        <div class="leg-item"><div class="leg-dot ev-launch" style="background:#6EE7B7;"></div>iOS提审/发版</div>
+      </div>
+
+      <div id="versionDetail"></div>
+    </div>
+
+    <!-- ===== 右侧：版本Tabs + 切换面板 ===== -->
+    <div class="main-right">
+      <!-- 筛选栏 -->
+      <div class="filter-bar">
+        <span style="font-size:12px;color:var(--color-text-secondary);">点击版本查看详情</span>
+        <select id="versionJump" onchange="jumpToVersion()" style="padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--color-border-light);background:var(--color-surface);color:var(--color-text-primary);margin-left:auto;">
+          <option value="">快速跳转版本…</option>
+        </select>
+      </div>
+
+      <div class="version-tabs" id="versionTabs"></div>
+
+      <div class="right-tabs">
+        <div class="right-tab active" id="rightTabHoliday" onclick="switchRightTab('holiday')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          假期管理
+        </div>
+        <div class="right-tab" id="rightTabChat" onclick="switchRightTab('chat')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          AI 排期
+          <span class="chat-status offline" id="chatStatus"></span>
+        </div>
+      </div>
+
+      <!-- 假期管理面板 -->
+      <div class="right-panel show" id="rightPanelHoliday">
+        <div class="card holiday-panel">
+
+          <!-- ── 管理操作区 ── -->
+          <div class="mgmt-section">
+            <div class="mgmt-label">假期管理</div>
+            <div class="mgmt-row">
+              <input type="date" id="hpDateStart" title="开始日期">
+              <span class="date-sep">&mdash;</span>
+              <input type="date" id="hpDateEnd" title="结束日期">
+              <button class="btn btn-primary" onclick="addHoliday()">添加假期</button>
+              <button class="btn btn-warn" onclick="addMakeupDay()">添加调休日</button>
+            </div>
+          </div>
+
+          <div class="mgmt-section">
+            <div class="mgmt-label">禁发日期</div>
+            <div class="mgmt-row">
+              <input type="date" id="nrDateStart" title="开始日期">
+              <span class="date-sep">&mdash;</span>
+              <input type="date" id="nrDateEnd" title="结束日期">
+              <button class="btn btn-danger" onclick="addNoRelease()">添加禁发</button>
+            </div>
+          </div>
+
+          <!-- ── 已有规则展示区 ── -->
+          <div class="rules-section">
+            <div class="rules-section-header">已有规则</div>
+            <div id="rulesContainer">
+              <div class="rule-empty">暂无自定义规则</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- AI 排期面板 -->
+      <div class="right-panel" id="rightPanelChat">
+        <div class="card chat-panel">
+          <h3>AI 排期助手</h3>
+          <div class="chat-config">
+            <label>模型</label>
+            <select id="chatModel">
+              <option value="deepseek-chat">DeepSeek V3</option>
+              <option value="deepseek-reasoner">DeepSeek R1</option>
+            </select>
+            <button onclick="checkChatHealth()">测试连接</button>
+            <button onclick="clearChat()">清空对话</button>
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-msg assistant">你好，我是 AI 排期助手。可以帮你：<br>· 查看各版本排期详情<br>· 添加或删除假期区间<br>· 调整排期基准参数<br>· 回答排期相关问题<br><br>请问有什么可以帮你的？</div>
+          </div>
+          <div class="chat-input-row">
+            <textarea id="chatInput" rows="1" placeholder="输入消息，Enter 发送，Shift+Enter 换行…" onkeydown="handleChatKey(event)"></textarea>
+            <button class="primary" id="chatSendBtn" onclick="sendChat()">发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ================================================================
+ *  All JavaScript logic preserved exactly from the original.
+ *  Only CSS/HTML structure has been redesigned.
+ * ================================================================ */
+const YEAR = 2026;
+
+// China public holidays 2026
+const holidays = new Set([
+  '2026-01-01','2026-01-02','2026-01-03',
+  '2026-01-28','2026-01-29','2026-01-30','2026-01-31',
+  '2026-02-01','2026-02-02','2026-02-03','2026-02-04',
+  '2026-04-06','2026-04-05',
+  '2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05',
+  '2026-06-19','2026-06-20','2026-06-21',
+  '2026-09-25','2026-09-26','2026-09-27',
+  '2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07','2026-10-08',
+]);
+
+const makeupDays = new Set([
+  '2026-01-25','2026-02-08',
+  '2026-04-26',
+  '2026-05-10',
+  '2026-09-27',
+  '2026-10-10',
+  '2026-10-11',
+]);
+
+function isWeekend(d) {
+  const day = d.getDay();
+  return day === 0 || day === 6;
+}
+
+let userHolidays = [];
+let userMakeupDays = [];
+let noReleaseRanges = [];
+
+function expandRange(range) {
+  const out = new Set();
+  const s = new Date(range.start + 'T00:00:00');
+  const e = new Date(range.end + 'T00:00:00');
+  const cur = new Date(s);
+  while (cur <= e) {
+    out.add(fmt(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+
+function isHoliday(d) {
+  const key = fmt(d);
+  if (holidays.has(key)) return true;
+  for (const r of userHolidays) {
+    if (expandRange(r).has(key)) return true;
+  }
+  return false;
+}
+
+function isMakeup(d) {
+  const key = fmt(d);
+  if (makeupDays.has(key)) return true;
+  for (const r of userMakeupDays) {
+    if (expandRange(r).has(key)) return true;
+  }
+  return false;
+}
+
+function isNoReleaseDate(d) {
+  const key = fmt(d);
+  for (const r of noReleaseRanges) {
+    if (expandRange(r).has(key)) return true;
+  }
+  return false;
+}
+
+function isWorkday(d) {
+  if (isHoliday(d)) return false;
+  if (isMakeup(d)) return true;
+  if (isWeekend(d)) return false;
+  return true;
+}
+
+function addDays(d, n) {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+
+function fmt(d) {
+  return d.toISOString().slice(0,10);
+}
+
+function addWorkdays(d, n) {
+  if (n >= 0) {
+    let cur = new Date(d);
+    let count = 0;
+    while (count < n) {
+      cur = addDays(cur, 1);
+      if (isWorkday(cur)) count++;
+    }
+    return cur;
+  } else {
+    let cur = new Date(d);
+    let count = 0;
+    const target = -n;
+    while (count < target) {
+      cur = addDays(cur, -1);
+      if (isWorkday(cur)) count++;
+    }
+    return cur;
+  }
+}
+
+function nextWorkday(d) {
+  return addWorkdays(d, 1);
+}
+
+function ensureWorkday(d) {
+  let cur = new Date(d);
+  while (!isWorkday(cur)) cur = addDays(cur, 1);
+  return cur;
+}
+
+function countWorkdays(start, end) {
+  let count = 0;
+  let cur = new Date(start);
+  while (cur <= end) {
+    if (isWorkday(cur)) count++;
+    cur = addDays(cur, 1);
+  }
+  return count;
+}
+
+function fmtCN(d) {
+  return `${d.getMonth()+1}月${d.getDate()}日`;
+}
+
+function hasLongHoliday(start, end) {
+  let cur = new Date(start);
+  let streak = 0;
+  let maxStreak = 0;
+  while (cur <= end) {
+    if (!isWorkday(cur)) {
+      streak++;
+      maxStreak = Math.max(maxStreak, streak);
+    } else {
+      streak = 0;
+    }
+    cur = addDays(cur, 1);
+  }
+  return maxStreak >= 4;
+}
+
+// ===== 版本配置：只需 BRD初评 + 发版 两个日期，其余自动推算 =====
+const versionConfig = [
+  { name: 'S7-1', brdDate: '2026-06-16', launchDate: '2026-07-15' },
+  { name: 'S7-2', brdDate: '2026-07-01', launchDate: '2026-07-30' },
+  { name: 'S8-1', brdDate: '2026-08-03', launchDate: '2026-08-28' },
+  { name: 'S8-2', brdDate: '2026-09-01', launchDate: '2026-09-25' },
+  { name: 'S9-1', brdDate: '2026-09-28', launchDate: '2026-10-30' },
+  { name: 'S9-2', brdDate: '2026-11-02', launchDate: '2026-11-27' },
+];
+
+function buildVersions() {
+  const versions = [];
+
+  for (const cfg of versionConfig) {
+    const name = cfg.name;
+
+    // ===== 前置固定阶段（从 BRD初评 正向推算） =====
+    const brdInit       = new Date(cfg.brdDate + 'T00:00:00');
+    const brdFinal      = addWorkdays(brdInit, 3);
+    const prdInitInt    = new Date(brdFinal);                        // 同日
+    const prdFinalInt   = addWorkdays(prdInitInt, 1);
+    const prdFinalOrder = addWorkdays(prdFinalInt, 2);
+    const prdFinalSearch = addWorkdays(prdFinalOrder, 1);
+    const schedule      = addWorkdays(prdFinalSearch, 1);
+    const devStart      = addWorkdays(schedule, 1);
+
+    // ===== 发版日（用户指定，确保是工作日） =====
+    let launch = ensureWorkday(new Date(cfg.launchDate + 'T00:00:00'));
+
+    // ===== 后置固定阶段（从 发版日 反向推算） =====
+    const huaweiIosReview = new Date(launch);                        // iOS提审 = 发版
+    const androidReview   = addWorkdays(huaweiIosReview, -1);
+    const grayEnd         = addDays(androidReview, -1);
+    const grayStart       = addDays(grayEnd, -1);
+    const regressionEnd   = addDays(grayStart, -1);
+    const regressionStart = addDays(regressionEnd, -1);
+    const integrationEnd  = addWorkdays(regressionStart, -1);
+    const testEnd         = addWorkdays(integrationEnd, -1);
+
+    // ===== 动态阶段：开发 + 提测(1wd) + 测试，按 2:1 分配 =====
+    const availWD = countWorkdays(devStart, testEnd);
+    const poolWD = Math.max(3, availWD - 1);  // 扣掉1天提测
+    const devDays = Math.max(2, Math.round(poolWD * 2 / 3));
+    const testDays = Math.max(1, poolWD - devDays);
+
+    const devEnd    = addWorkdays(devStart, devDays - 1);
+    const freezeDate = addWorkdays(devEnd, 1);                       // 需求截止&提测
+    const testStart = addWorkdays(freezeDate, 1);
+    const devFreeze = new Date(freezeDate);
+
+    const longHol = hasLongHoliday(devStart, launch);
+    const totalDevTest = devDays + testDays;
+    const isMonthly = (countWorkdays(brdInit, launch) >= 25);
+
+    versions.push({
+      name, brdInit, brdFinal, prdInitInt, prdFinalInt,
+      prdFinalOrder, prdFinalSearch, schedule,
+      devStart, devEnd, devFreeze,
+      testStart, testEnd,
+      integrationEnd,
+      regressionStart, regressionEnd,
+      grayStart, grayEnd,
+      androidReview, huaweiIosReview, launch,
+      longHol, totalDevTest, isMonthly,
+    });
+  }
+
+  return versions;
+}
+let allVersions;
+let eventMap = {};
+
+function addEvent(d, label, cls, ver) {
+  const k = fmt(d);
+  if (!eventMap[k]) eventMap[k] = [];
+  eventMap[k].push({label, cls, ver});
+}
+
+function buildEventMap() {
+  eventMap = {};
+  allVersions.forEach(v => {
+    const n = v.name;
+    addEvent(v.brdInit, 'BRD初评', 'ev-brd-init', n);
+    addEvent(v.brdFinal, 'BRD终评', 'ev-brd-final', n);
+    addEvent(v.prdInitInt, '内部PRD初评', 'ev-prd-init', n);
+    addEvent(v.prdFinalInt, '内部PRD终评', 'ev-prd-final', n);
+    addEvent(v.prdFinalOrder, 'PRD终评(订单)', 'ev-prd-order', n);
+    addEvent(v.prdFinalSearch, 'PRD终评(搜推)', 'ev-prd-search', n);
+    addEvent(v.schedule, '输出排期', 'ev-schedule', n);
+
+    let cur = new Date(v.devStart);
+    while (cur <= v.devEnd) {
+      if (isWorkday(cur)) addEvent(cur, `${n}开发`, 'ev-dev', n);
+      cur = addDays(cur, 1);
+    }
+
+    addEvent(v.devFreeze, '需求截止&提测', 'ev-dev', n);
+
+    cur = new Date(v.testStart);
+    while (cur <= v.testEnd) {
+      if (isWorkday(cur)) addEvent(cur, `${n}测试`, 'ev-test', n);
+      cur = addDays(cur, 1);
+    }
+
+    addEvent(v.integrationEnd, '集成/上线', 'ev-schedule', n);
+    addEvent(v.regressionStart, '客户端回归', 'ev-regression', n);
+    addEvent(v.regressionEnd, '客户端回归', 'ev-regression', n);
+    addEvent(v.grayStart, '灰度', 'ev-gray', n);
+    addEvent(v.grayEnd, '灰度', 'ev-gray', n);
+    addEvent(v.androidReview, '安卓/鸿蒙提审', 'ev-android', n);
+    addEvent(v.huaweiIosReview, 'iOS提审/发版', 'ev-launch', n);
+  });
+}
+
+function rebuildAll() {
+  allVersions = buildVersions();
+  buildEventMap();
+  saveUserData();
+  renderTabs();
+  renderCal();
+  renderDetail();
+}
+
+// ----- localStorage -----
+function saveUserData() {
+  try {
+    localStorage.setItem('rc_user_holidays', JSON.stringify(userHolidays));
+    localStorage.setItem('rc_user_makeup', JSON.stringify(userMakeupDays));
+    localStorage.setItem('rc_no_release', JSON.stringify(noReleaseRanges));
+  } catch(e) {}
+}
+
+function loadUserData() {
+  try {
+    const h = localStorage.getItem('rc_user_holidays');
+    if (h) userHolidays = JSON.parse(h);
+    const m = localStorage.getItem('rc_user_makeup');
+    if (m) userMakeupDays = JSON.parse(m);
+    const nr = localStorage.getItem('rc_no_release');
+    if (nr) noReleaseRanges = JSON.parse(nr);
+  } catch(e) {}
+}
+
+// Init
+loadUserData();
+allVersions = buildVersions();
+buildEventMap();
+
+const _realM = new Date().getMonth();
+let currentMonth = (_realM >= 6 && _realM <= 11) ? _realM : 6;
+let currentYear = YEAR;
+let selectedVersion = null;
+
+function renderTabs() {
+  const tabs = document.getElementById('versionTabs');
+  tabs.innerHTML = allVersions.map(v =>
+    `<div class="version-tab ${selectedVersion===v.name?'active':''}" onclick="selectVersion('${v.name}')">${v.name}</div>`
+  ).join('');
+  // 同步版本跳转下拉框
+  const vj = document.getElementById('versionJump');
+  if (vj) {
+    vj.innerHTML = '<option value="">快速跳转版本…</option>' +
+      allVersions.map(v => `<option value="${v.name}">${v.name} — ${fmtCN(v.launch)} 发版</option>`).join('');
+  }
+}
+
+function selectVersion(name) {
+  selectedVersion = selectedVersion === name ? null : name;
+  renderTabs();
+  renderDetail();
+  renderCal();
+  // 同步版本跳转下拉框
+  const vj = document.getElementById('versionJump');
+  if (vj) vj.value = selectedVersion || '';
+}
+
+function renderDetail() {
+  const el = document.getElementById('versionDetail');
+  if (!selectedVersion) { el.innerHTML = ''; return; }
+  const v = allVersions.find(x => x.name === selectedVersion);
+  if (!v) return;
+  const badgeHtml = v.isMonthly
+    ? '<span style="font-size:11px;color:#D97706;font-weight:500;background:#FFFBEB;padding:2px 8px;border-radius:9999px;border:1px solid #FDE68A;">月度发版</span>'
+    : v.longHol
+      ? '<span style="font-size:11px;color:#D97706;font-weight:500;background:#FFFBEB;padding:2px 8px;border-radius:9999px;border:1px solid #FDE68A;">含长假</span>'
+      : '<span style="font-size:11px;color:#10B981;font-weight:500;background:#ECFDF5;padding:2px 8px;border-radius:9999px;border:1px solid #A7F3D0;">半月发版</span>';
+  el.innerHTML = `
+    <div class="version-info">
+      <h3>${v.name} 排期详情 ${badgeHtml}</h3>
+      ${[
+        ['BRD初评', fmtCN(v.brdInit)],
+        ['BRD终评', fmtCN(v.brdFinal)],
+        ['内部PRD初评', fmtCN(v.prdInitInt)],
+        ['内部PRD终评', fmtCN(v.prdFinalInt)],
+        ['PRD终评（订单/结算/购物车）', fmtCN(v.prdFinalOrder)],
+        ['PRD终评（搜推/商详）', fmtCN(v.prdFinalSearch)],
+        ['输出排期', fmtCN(v.schedule)],
+        ['开发周期', `${fmtCN(v.devStart)} → ${fmtCN(v.devEnd)}（${countWorkdays(v.devStart, v.devEnd)}个工作日）`],
+        ['需求截止&提测', fmtCN(v.devFreeze)],
+        ['测试周期', `${fmtCN(v.testStart)} → ${fmtCN(v.testEnd)}（${countWorkdays(v.testStart, v.testEnd)}个工作日）`],
+        ['集成/上线', fmtCN(v.integrationEnd)],
+        ['客户端回归', `${fmtCN(v.regressionStart)} - ${fmtCN(v.regressionEnd)}`],
+        ['灰度', `${fmtCN(v.grayStart)} - ${fmtCN(v.grayEnd)}`],
+        ['安卓/鸿蒙提审', fmtCN(v.androidReview)],
+        ['鸿蒙+iOS提审 / 发版', fmtCN(v.huaweiIosReview)],
+      ].map(([l,val]) => `<div class="vi-row"><span class="vi-label">${l}</span><span class="vi-val">${val}</span></div>`).join('')}
+    </div>`;
+}
+
+function renderCal() {
+  const grid = document.getElementById('calGrid');
+  const monthTitle = document.getElementById('monthTitle');
+
+  const year = currentYear;
+  const month = currentMonth;
+  const title = `${year}年${month+1}月`;
+  monthTitle.textContent = title;
+
+  // Sync dropdowns
+  const ys = document.getElementById('yearSelect');
+  const ms = document.getElementById('monthSelect');
+  if (ys) ys.value = String(year);
+  if (ms) ms.value = String(month);
+
+  grid.innerHTML = '';
+
+  ['日','一','二','三','四','五','六'].forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-header';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month+1, 0);
+  const startDow = firstDay.getDay();
+  const today = new Date();
+
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(year, month, 1 - (startDow - i));
+    const cell = makeCell(d, true, today);
+    grid.appendChild(cell);
+  }
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date = new Date(year, month, d);
+    const cell = makeCell(date, false, today);
+    grid.appendChild(cell);
+  }
+
+  const total = startDow + lastDay.getDate();
+  const rem = (7 - (total % 7)) % 7;
+  for (let i = 1; i <= rem; i++) {
+    const date = new Date(year, month+1, i);
+    const cell = makeCell(date, true, today);
+    grid.appendChild(cell);
+  }
+}
+
+function makeCell(date, otherMonth, today) {
+  const cell = document.createElement('div');
+  cell.className = 'cal-day';
+
+  const isHol = isHoliday(date);
+  const isMkup = isMakeup(date);
+  const isWknd = isWeekend(date);
+
+  if (otherMonth) cell.classList.add('other-month');
+  else if (isHol) cell.classList.add('holiday');
+  else if (isWknd && !isMkup) cell.classList.add('weekend');
+
+  if (fmt(date) === fmt(today)) cell.classList.add('today');
+
+  const numDiv = document.createElement('div');
+  numDiv.className = 'day-num' + (isHol ? ' holiday-num' : '');
+  if (isHol) numDiv.innerHTML = date.getDate() + ' <span style="color:#EF4444;font-size:9px;font-weight:700;">休</span>';
+  else if (isMkup) numDiv.innerHTML = date.getDate() + ' <span style="color:#10B981;font-size:9px;font-weight:700;">班</span>';
+  else numDiv.textContent = date.getDate();
+  cell.appendChild(numDiv);
+
+  const evs = eventMap[fmt(date)] || [];
+  const filteredEvs = selectedVersion
+    ? evs.filter(e => e.ver === selectedVersion)
+    : evs;
+
+  const seen = new Set();
+  const uniqueEvs = [];
+  filteredEvs.forEach(e => {
+    const key = e.label + e.cls;
+    if (!seen.has(key)) { seen.add(key); uniqueEvs.push(e); }
+  });
+
+  uniqueEvs.slice(0,3).forEach(ev => {
+    const el = document.createElement('div');
+    el.className = `event ${ev.cls}`;
+    el.textContent = ev.label;
+    cell.appendChild(el);
+  });
+  if (uniqueEvs.length > 3) {
+    const more = document.createElement('div');
+    more.className = 'event';
+    more.style.cssText = 'background:var(--color-surface-alt);color:var(--color-text-secondary);font-weight:600;';
+    more.textContent = `+${uniqueEvs.length-3} 更多`;
+    cell.appendChild(more);
+  }
+
+  return cell;
+}
+
+function prevMonth() {
+  if (currentMonth > 0) { currentMonth--; renderCal(); }
+}
+
+function nextMonth() {
+  if (currentMonth < 11) { currentMonth++; renderCal(); }
+}
+
+function prevYear() {
+  if (currentYear > 2020) { currentYear--; renderCal(); }
+}
+
+function nextYear() {
+  if (currentYear < 2030) { currentYear++; renderCal(); }
+}
+
+function jumpToYear() {
+  currentYear = parseInt(document.getElementById('yearSelect').value);
+  renderCal();
+}
+
+function jumpToMonth() {
+  currentMonth = parseInt(document.getElementById('monthSelect').value);
+  renderCal();
+}
+
+function jumpToVersion() {
+  const name = document.getElementById('versionJump').value;
+  if (!name) return;
+  const v = allVersions.find(x => x.name === name);
+  if (!v) return;
+  // Jump to the launch month
+  const d = new Date(v.launch);
+  if (d.getFullYear() === currentYear) {
+    currentMonth = d.getMonth();
+  } else {
+    currentYear = d.getFullYear();
+    currentMonth = d.getMonth();
+  }
+  selectVersion(name);
+  renderCal();
+}
+
+// ===== 右侧 Tab 切换 =====
+let activeRightTab = 'holiday';
+function switchRightTab(tab) {
+  activeRightTab = tab;
+  document.getElementById('rightTabHoliday').classList.toggle('active', tab === 'holiday');
+  document.getElementById('rightTabChat').classList.toggle('active', tab === 'chat');
+  document.getElementById('rightPanelHoliday').classList.toggle('show', tab === 'holiday');
+  document.getElementById('rightPanelChat').classList.toggle('show', tab === 'chat');
+}
+
+// ===== 假期管理面板 =====
+function renderRules() {
+  const el = document.getElementById('rulesContainer');
+  if (!el) return;
+  let html = '';
+
+  // 假期组
+  if (userHolidays.length > 0) {
+    html += '<div class="rule-group"><div class="rule-group-title">假期</div><div class="rule-list">';
+    userHolidays.forEach((r, i) => {
+      const days = Math.round((new Date(r.end+'T00:00:00') - new Date(r.start+'T00:00:00')) / 86400000) + 1;
+      html += `<div class="rule-item holiday">
+        <div class="rule-item-body">
+          <span class="rule-badge holiday">休</span>
+          <span class="rule-item-text">${r.start} &mdash; ${r.end}（${days}天）</span>
+        </div>
+        <button class="btn btn-ghost" onclick="removeHolidayItem(${i})" title="删除">&times;</button>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  // 调休日组
+  if (userMakeupDays.length > 0) {
+    html += '<div class="rule-group"><div class="rule-group-title">调休工作日</div><div class="rule-list">';
+    userMakeupDays.forEach((r, i) => {
+      const days = Math.round((new Date(r.end+'T00:00:00') - new Date(r.start+'T00:00:00')) / 86400000) + 1;
+      html += `<div class="rule-item makeup">
+        <div class="rule-item-body">
+          <span class="rule-badge makeup">班</span>
+          <span class="rule-item-text">${r.start} &mdash; ${r.end}（${days}天）</span>
+        </div>
+        <button class="btn btn-ghost" onclick="removeMakeupItem(${i})" title="删除">&times;</button>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  // 禁发日期组
+  if (noReleaseRanges.length > 0) {
+    html += '<div class="rule-group"><div class="rule-group-title">禁发日期</div><div class="rule-list">';
+    noReleaseRanges.forEach((r, i) => {
+      const days = Math.round((new Date(r.end+'T00:00:00') - new Date(r.start+'T00:00:00')) / 86400000) + 1;
+      html += `<div class="rule-item norelease">
+        <div class="rule-item-body">
+          <span class="rule-badge norelease">禁</span>
+          <span class="rule-item-text">${r.start} &mdash; ${r.end}（${days}天）</span>
+        </div>
+        <button class="btn btn-ghost" onclick="removeNoReleaseItem(${i})" title="删除">&times;</button>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  if (!html) html = '<div class="rule-empty">暂无自定义规则</div>';
+  el.innerHTML = html;
+}
+
+function addHoliday() {
+  const s = document.getElementById('hpDateStart').value;
+  const e = document.getElementById('hpDateEnd').value;
+  if (!s || !e) { alert('请选择开始和结束日期'); return; }
+  if (s > e) { alert('开始日期不能晚于结束日期'); return; }
+  userHolidays.push({start: s, end: e});
+  document.getElementById('hpDateStart').value = '';
+  document.getElementById('hpDateEnd').value = '';
+  rebuildAll();
+  renderRules();
+}
+
+function addMakeupDay() {
+  const s = document.getElementById('hpDateStart').value;
+  const e = document.getElementById('hpDateEnd').value;
+  if (!s || !e) { alert('请选择开始和结束日期'); return; }
+  if (s > e) { alert('开始日期不能晚于结束日期'); return; }
+  userMakeupDays.push({start: s, end: e});
+  document.getElementById('hpDateStart').value = '';
+  document.getElementById('hpDateEnd').value = '';
+  rebuildAll();
+  renderRules();
+}
+
+function removeHolidayItem(i) {
+  userHolidays.splice(i, 1);
+  rebuildAll();
+  renderRules();
+}
+
+function removeMakeupItem(i) {
+  userMakeupDays.splice(i, 1);
+  rebuildAll();
+  renderRules();
+}
+
+function addNoRelease() {
+  const s = document.getElementById('nrDateStart').value;
+  const e = document.getElementById('nrDateEnd').value;
+  if (!s || !e) { alert('请选择开始和结束日期'); return; }
+  if (s > e) { alert('开始日期不能晚于结束日期'); return; }
+  noReleaseRanges.push({start: s, end: e});
+  document.getElementById('nrDateStart').value = '';
+  document.getElementById('nrDateEnd').value = '';
+  rebuildAll();
+  renderRules();
+}
+
+function removeNoReleaseItem(i) {
+  noReleaseRanges.splice(i, 1);
+  rebuildAll();
+  renderRules();
+}
+
+// ===== AI 对话面板 =====
+let chatMessages = [
+  {role: 'assistant', content: '你好，我是 AI 排期助手。可以帮你：\n· 查看各版本排期详情\n· 添加或删除假期区间\n· 调整排期基准参数\n· 回答排期相关问题\n\n请问有什么可以帮你的？'}
+];
+let chatBusy = false;
+
+function clearChat() {
+  chatMessages = [
+    {role: 'assistant', content: '对话已清空。有什么可以帮你的？'}
+  ];
+  renderChatMessages();
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendChat();
+  }
+}
+
+function renderChatMessages() {
+  const el = document.getElementById('chatMessages');
+  el.innerHTML = chatMessages.map(m => {
+    if (m.role === 'tool') {
+      return `<div class="chat-msg tool"><details><summary>工具: ${m.label || '执行操作'}</summary><div class="tool-detail">${m.content}</div></details></div>`;
+    }
+    const cls = m.role === 'user' ? 'user' : 'assistant';
+    return `<div class="chat-msg ${cls}">${m.content.replace(/\n/g, '<br>')}</div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function checkChatHealth() {
+  switchRightTab('chat');
+  const statusEl = document.getElementById('chatStatus');
+  statusEl.className = 'chat-status offline';
+  try {
+    const r = await fetch('http://localhost:3456/api/health', {signal: AbortSignal.timeout(5000)});
+    if (r.ok) {
+      statusEl.className = 'chat-status online';
+      addChatMsg('assistant', '✅ 代理连接成功！可以开始对话。');
+    } else {
+      statusEl.className = 'chat-status offline';
+      addChatMsg('assistant', '❌ 代理返回错误，请检查 server.js 是否正常运行。');
+    }
+  } catch(e) {
+    statusEl.className = 'chat-status offline';
+    addChatMsg('assistant', '❌ 无法连接代理服务器（localhost:3456），请先运行 `node server.js`。');
+  }
+}
+
+function addChatMsg(role, content, label) {
+  chatMessages.push({role, content, label});
+  renderChatMessages();
+}
+
+function buildSystemPrompt() {
+  const scheduleSummary = allVersions.map(v =>
+    `${v.name}: BRD初评${fmtCN(v.brdInit)} → 开发${fmtCN(v.devStart)}~${fmtCN(v.devEnd)} → 测试${fmtCN(v.testStart)}~${fmtCN(v.testEnd)} → 发版${fmtCN(v.launch)}${v.longHol?' [含长假]':''}`
+  ).join('\n');
+
+  const holidaySummary = userHolidays.map(r => `${r.start}~${r.end}`).join(', ') || '无';
+  const makeupSummary = userMakeupDays.map(r => `${r.start}~${r.end}`).join(', ') || '无';
+
+  return `你是"1号会员店"2026年发版日历的AI排期助手。你可以通过函数调用来操作排期数据。
+
+## 当前排期（共${allVersions.length}个版本）
+${scheduleSummary}
+
+## 用户自定义假期
+${holidaySummary}
+
+## 用户自定义调休工作日
+${makeupSummary}
+
+## 排期规则
+- 每个版本只需配置 BRD初评日期 和 发版日期，其余阶段自动推算
+- 流程：BRD初评 → +3wd → BRD终评(同日内PRD初评) → +1wd → 内PRD终评 → +2wd → PRD终评(订单) → +1wd → PRD终评(搜推) → +1wd → 输出排期 → +1wd → 开发开始 → 开发+提测+测试(按2:1分配剩余工作日) → 集成/上线(1wd) → 回归(2自然日) → 灰度(2自然日) → 安卓提审(1wd) → iOS提审/发版
+- 正常周期开发+测试=10个工作日，遇≥4天长假则为20个工作日
+- 所有排期仅计算工作日（周末和节假日自动跳过）
+
+## 可用函数
+- add_holiday / remove_holiday — 添加/删除假期区间
+- add_makeup_day / remove_makeup_day — 添加/删除调休工作日
+- list_holidays — 列出所有自定义假期
+- get_schedule — 查看版本排期详情
+- set_version_dates — 修改指定版本的BRD初评和发版日期
+
+用中文回复，简洁清晰。当用户要求修改排期时，调用相应函数。`;
+}
+
+const TOOLS = [
+  { type: 'function', function: { name: 'add_holiday', description: '添加一个假期区间', parameters: { type: 'object', properties: { start: { type: 'string', description: '开始日期 YYYY-MM-DD' }, end: { type: 'string', description: '结束日期 YYYY-MM-DD' } }, required: ['start', 'end'] } } },
+  { type: 'function', function: { name: 'remove_holiday', description: '删除指定索引的假期区间', parameters: { type: 'object', properties: { index: { type: 'integer', description: '假期在列表中的索引(从0开始)' } }, required: ['index'] } } },
+  { type: 'function', function: { name: 'add_makeup_day', description: '添加一个调休工作日区间', parameters: { type: 'object', properties: { start: { type: 'string', description: '开始日期 YYYY-MM-DD' }, end: { type: 'string', description: '结束日期 YYYY-MM-DD' } }, required: ['start', 'end'] } } },
+  { type: 'function', function: { name: 'remove_makeup_day', description: '删除指定索引的调休工作日区间', parameters: { type: 'object', properties: { index: { type: 'integer', description: '调休日在列表中的索引(从0开始)' } }, required: ['index'] } } },
+  { type: 'function', function: { name: 'list_holidays', description: '列出所有用户自定义假期和调休日', parameters: { type: 'object', properties: {}, required: [] } } },
+  { type: 'function', function: { name: 'get_schedule', description: '获取指定版本或全部版本的排期详情', parameters: { type: 'object', properties: { version: { type: 'string', description: '版本名如 S7-1，不填则返回全部' } }, required: [] } } },
+  { type: 'function', function: { name: 'set_version_dates', description: '修改指定版本的BRD初评和发版日期', parameters: { type: 'object', properties: { version: { type: 'string', description: '版本名如 S7-1' }, brdDate: { type: 'string', description: 'BRD初评日期 YYYY-MM-DD' }, launchDate: { type: 'string', description: '发版日期 YYYY-MM-DD' } }, required: ['version'] } } },
+];
+
+function executeTool(name, input) {
+  switch (name) {
+    case 'add_holiday':
+      userHolidays.push({start: input.start, end: input.end});
+      rebuildAll();
+      renderHolidayList();
+      return `已添加假期：${input.start} → ${input.end}`;
+    case 'remove_holiday':
+      if (input.index >= 0 && input.index < userHolidays.length) {
+        const r = userHolidays.splice(input.index, 1)[0];
+        rebuildAll();
+        renderHolidayList();
+        return `已删除假期：${r.start} → ${r.end}`;
+      }
+      return `删除失败：索引 ${input.index} 超出范围（当前共 ${userHolidays.length} 条假期）`;
+    case 'add_makeup_day':
+      userMakeupDays.push({start: input.start, end: input.end});
+      rebuildAll();
+      renderHolidayList();
+      return `已添加调休日：${input.start} → ${input.end}`;
+    case 'remove_makeup_day':
+      if (input.index >= 0 && input.index < userMakeupDays.length) {
+        const r = userMakeupDays.splice(input.index, 1)[0];
+        rebuildAll();
+        renderHolidayList();
+        return `已删除调休日：${r.start} → ${r.end}`;
+      }
+      return `删除失败：索引 ${input.index} 超出范围（当前共 ${userMakeupDays.length} 条调休日）`;
+    case 'list_holidays':
+      const h = userHolidays.map((r,i) => `${i}: ${r.start}→${r.end}`).join(', ') || '无';
+      const m = userMakeupDays.map((r,i) => `${i}: ${r.start}→${r.end}`).join(', ') || '无';
+      return `自定义假期: [${h}]\n调休工作日: [${m}]`;
+    case 'get_schedule':
+      if (input.version) {
+        const v = allVersions.find(x => x.name === input.version);
+        if (!v) return `未找到版本 ${input.version}`;
+        return `${v.name}: BRD初评${fmtCN(v.brdInit)} → BRD终评${fmtCN(v.brdFinal)} → PRD初评${fmtCN(v.prdInitInt)} → PRD终评${fmtCN(v.prdFinalInt)} → PRD终评(订单)${fmtCN(v.prdFinalOrder)} → PRD终评(搜推)${fmtCN(v.prdFinalSearch)} → 输出排期${fmtCN(v.schedule)} → 开发${fmtCN(v.devStart)}~${fmtCN(v.devEnd)}(${Math.round(v.totalDevTest*2/3)}天) → 测试${fmtCN(v.testStart)}~${fmtCN(v.testEnd)}(${v.totalDevTest-Math.round(v.totalDevTest*2/3)}天) → 客户端回归${fmtCN(v.regressionStart)}~${fmtCN(v.regressionEnd)} → 灰度${fmtCN(v.grayStart)}~${fmtCN(v.grayEnd)} → 提审${fmtCN(v.androidReview)} → 发版${fmtCN(v.launch)}${v.longHol?' [含长假]':''}`;
+      }
+      return allVersions.map(v => `${v.name}: 发版${fmtCN(v.launch)}`).join('\n');
+    case 'set_version_dates': {
+      const v = versionConfig.find(x => x.name === input.version);
+      if (!v) return `未找到版本 ${input.version}，可用版本：${versionConfig.map(x=>x.name).join(', ')}`;
+      if (input.brdDate) v.brdDate = input.brdDate;
+      if (input.launchDate) v.launchDate = input.launchDate;
+      rebuildAll();
+      return `${input.version} 已更新：BRD初评=${v.brdDate}，发版=${v.launchDate}`;
+    }
+    default:
+      return `未知工具: ${name}`;
+  }
+}
+
+async function sendChat() {
+  if (chatBusy) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  switchRightTab('chat');
+  addChatMsg('user', text);
+  input.value = '';
+  chatBusy = true;
+  document.getElementById('chatSendBtn').disabled = true;
+  document.getElementById('chatStatus').className = 'chat-status online';
+
+  const sysPrompt = buildSystemPrompt();
+  const apiMessages = [
+    {role: 'system', content: sysPrompt}
+  ];
+  for (let i = 1; i < chatMessages.length; i++) {
+    const m = chatMessages[i];
+    if (m.role === 'user') {
+      apiMessages.push({role: 'user', content: m.content});
+    } else if (m.role === 'assistant') {
+      if (m.toolCalls) {
+        apiMessages.push({role: 'assistant', content: m.content || null, tool_calls: m.toolCalls});
+      } else {
+        apiMessages.push({role: 'assistant', content: m.content});
+      }
+    } else if (m.role === 'tool') {
+      // 只回放有 toolCallId 的结果消息，跳过纯展示的"调用"消息
+      if (m.toolCallId) {
+        apiMessages.push({role: 'tool', tool_call_id: m.toolCallId, content: m.content});
+      }
+    }
+  }
+
+  let maxRounds = 5;
+  while (maxRounds-- > 0) {
+    try {
+      const model = document.getElementById('chatModel').value;
+
+      const resp = await fetch('http://localhost:3456/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 4096,
+          messages: apiMessages,
+          tools: TOOLS,
+          stream: false,
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        const errMsg = typeof err.error === 'string' ? err.error : JSON.stringify(err.error || err);
+        addChatMsg('assistant', '❌ API 错误: ' + (errMsg || resp.statusText));
+        break;
+      }
+
+      const data = await resp.json();
+      const choice = (data.choices || [])[0];
+      if (!choice) { addChatMsg('assistant', '(空响应，请重试)'); break; }
+
+      const msg = choice.message;
+      const textContent = msg.content || '';
+      const toolCalls = msg.tool_calls || [];
+
+      if (toolCalls.length > 0) {
+        chatMessages.push({role: 'assistant', content: textContent, toolCalls: toolCalls});
+        renderChatMessages();
+
+        for (const tc of toolCalls) {
+          const fn = tc.function;
+          let args = {};
+          try { args = JSON.parse(fn.arguments || '{}'); } catch(e) {}
+          const result = executeTool(fn.name, args);
+          // 单条 tool 消息，含调用参数和结果，带 toolCallId 用于 API 回放
+          addChatMsg('tool', `📥 ${JSON.stringify(args)}\n📤 ${result}`, `${fn.name}`);
+          // 立即补上 toolCallId
+          chatMessages[chatMessages.length - 1].toolCallId = tc.id;
+
+          apiMessages.push({role: 'assistant', content: textContent || null, tool_calls: [tc]});
+          apiMessages.push({role: 'tool', tool_call_id: tc.id, content: result});
+        }
+        continue;
+      } else {
+        addChatMsg('assistant', textContent);
+        break;
+      }
+    } catch(e) {
+      addChatMsg('assistant', '❌ 连接失败: ' + e.message + '\n请确认已启动 `node server.js`');
+      document.getElementById('chatStatus').className = 'chat-status offline';
+      break;
+    }
+  }
+
+  if (maxRounds <= 0) {
+    addChatMsg('assistant', '(已达到最大工具调用轮次，请重新提问)');
+  }
+
+  chatBusy = false;
+  document.getElementById('chatSendBtn').disabled = false;
+}
+
+// Init UI
+renderTabs();
+renderCal();
+renderDetail();
+renderHolidayList();
+renderNoReleaseList();
+</script>
+
+</body>
+</html>
