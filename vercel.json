@@ -1,9 +1,25 @@
 {
   "version": 2,
-  "rewrites": [
+  "buildCommand": "npx prisma generate && npx prisma db push --skip-generate --accept-data-loss",
+  "installCommand": "npm install",
+  "builds": [
     {
-      "source": "/",
-      "destination": "/index.html"
+      "src": "server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
     }
   ]
 }

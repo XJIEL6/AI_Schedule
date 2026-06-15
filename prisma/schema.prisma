@@ -1,0 +1,89 @@
+// ============================================================
+// 1号会员店发版日历 — Prisma Schema (Supabase PostgreSQL)
+// ============================================================
+// 部署到 Supabase（已存在对应表）时，执行:
+//   npx prisma db pull      # 从 Supabase 拉取已有表结构
+//   npx prisma generate     # 生成 Prisma Client
+//
+// 全新部署时执行:
+//   npx prisma db push      # 将 schema 推送到 Supabase
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── 发版版本（核心表）──
+model Version {
+  id         BigInt    @id @default(autoincrement())
+  name       String    @unique @db.VarChar(50)
+  brdDate    DateTime  @map("brd_date") @db.Date
+  launchDate DateTime  @map("launch_date") @db.Date
+  sortOrder  Int       @default(0) @map("sort_order")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("versions")
+}
+
+// ── 假期 & 调休 ──
+model Holiday {
+  id        BigInt    @id @default(autoincrement())
+  startDate DateTime  @map("start_date") @db.Date
+  endDate   DateTime  @map("end_date") @db.Date
+  type      String    @default("holiday") @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("holidays")
+}
+
+// ── 不能发版日期 ──
+model NoRelease {
+  id        BigInt    @id @default(autoincrement())
+  startDate DateTime  @map("start_date") @db.Date
+  endDate   DateTime  @map("end_date") @db.Date
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("no_release")
+}
+
+// ── 邮件配置（单例，id=1）──
+model EmailConfig {
+  id         Int       @id @default(1)
+  smtpHost   String    @default("") @map("smtp_host") @db.VarChar(255)
+  smtpPort   Int       @default(465) @map("smtp_port")
+  smtpUser   String    @default("") @map("smtp_user") @db.VarChar(255)
+  smtpPass   String    @default("") @map("smtp_pass") @db.VarChar(255)
+  recipients String    @default("") @db.VarChar(500)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("email_config")
+}
+
+// ── AI 对话 ──
+model Conversation {
+  id        BigInt         @id @default(autoincrement())
+  title     String         @default("New Conversation") @db.VarChar(200)
+  messages  ChatMessage[]
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("conversations")
+}
+
+model ChatMessage {
+  id             BigInt       @id @default(autoincrement())
+  conversationId BigInt       @map("conversation_id")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       @db.VarChar(20)
+  content        String       @db.Text
+  toolCalls      Json?        @map("tool_calls")
+  label          String?      @db.VarChar(200)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("chat_messages")
+}

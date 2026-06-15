@@ -1,19 +1,23 @@
 {
   "name": "release-calendar",
-  "version": "2.0.0",
-  "description": "1号会员店发版日历 - 前后端一体化",
+  "version": "3.0.0",
+  "description": "1号会员店发版日历 — Prisma + Supabase + Vercel",
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "vercel-build": "npx prisma generate && npx prisma db push --skip-generate --accept-data-loss"
   },
   "dependencies": {
+    "@prisma/client": "^6.0.0",
     "@supabase/supabase-js": "^2.56.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
     "express": "^4.21.0",
     "node-cron": "^3.0.3",
-    "nodemailer": "^6.9.0",
-    "sql.js": "^1.12.0"
+    "nodemailer": "^6.9.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.0.0"
   }
 }
