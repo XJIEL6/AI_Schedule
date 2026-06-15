@@ -1,14 +1,3 @@
-// ============================================================
-// 1号会员店发版日历 — Prisma Schema (Supabase PostgreSQL)
-// ============================================================
-// 部署到 Supabase（已存在对应表）时，执行:
-//   npx prisma db pull      # 从 Supabase 拉取已有表结构
-//   npx prisma generate     # 生成 Prisma Client
-//
-// 全新部署时执行:
-//   npx prisma db push      # 将 schema 推送到 Supabase
-// ============================================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── 发版版本（核心表）──
 model Version {
   id         BigInt    @id @default(autoincrement())
   name       String    @unique @db.VarChar(50)
@@ -26,32 +14,26 @@ model Version {
   launchDate DateTime  @map("launch_date") @db.Date
   sortOrder  Int       @default(0) @map("sort_order")
   updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
   @@map("versions")
 }
 
-// ── 假期 & 调休 ──
 model Holiday {
   id        BigInt    @id @default(autoincrement())
   startDate DateTime  @map("start_date") @db.Date
   endDate   DateTime  @map("end_date") @db.Date
   type      String    @default("holiday") @db.VarChar(20)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-
   @@map("holidays")
 }
 
-// ── 不能发版日期 ──
 model NoRelease {
   id        BigInt    @id @default(autoincrement())
   startDate DateTime  @map("start_date") @db.Date
   endDate   DateTime  @map("end_date") @db.Date
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-
   @@map("no_release")
 }
 
-// ── 邮件配置（单例，id=1）──
 model EmailConfig {
   id         Int       @id @default(1)
   smtpHost   String    @default("") @map("smtp_host") @db.VarChar(255)
@@ -60,18 +42,15 @@ model EmailConfig {
   smtpPass   String    @default("") @map("smtp_pass") @db.VarChar(255)
   recipients String    @default("") @db.VarChar(500)
   updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
   @@map("email_config")
 }
 
-// ── AI 对话 ──
 model Conversation {
   id        BigInt         @id @default(autoincrement())
   title     String         @default("New Conversation") @db.VarChar(200)
   messages  ChatMessage[]
   createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
   @@map("conversations")
 }
 
@@ -81,9 +60,8 @@ model ChatMessage {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   role           String       @db.VarChar(20)
   content        String       @db.Text
-  toolCalls      Json?        @map("tool_calls")
+  toolCalls      Json?        @map("tool_calls") @db.JsonB
   label          String?      @db.VarChar(200)
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
-
   @@map("chat_messages")
 }

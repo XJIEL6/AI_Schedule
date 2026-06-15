@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "vercel-build": "npx prisma generate && npx prisma db push --skip-generate --accept-data-loss"
+    "vercel-build": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.0.0",

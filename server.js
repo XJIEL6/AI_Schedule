@@ -178,7 +178,7 @@ try {
 // ── 健康检查 ──
 app.get('/api/health', async (_req, res) => {
   const vCnt = await prisma.version.count();
-  res.json({ status: 'ok', db: 'prisma+supabase', versions: vCnt, provider: 'deepseek' });
+  res.json({ status: 'ok', db: "prisma+supabase", versions: vCnt, provider: 'deepseek' });
 });
 
 // ── Vercel / 本地兼容启动 ──
