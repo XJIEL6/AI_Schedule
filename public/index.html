@@ -1334,6 +1334,7 @@ body {
           <option value="">快速跳转版本…</option>
         </select>
         <button onclick="exportCSV()" style="padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);white-space:nowrap;" title="导出CSV">📥 CSV</button>
+        <button onclick="exportExcel()" style="padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);white-space:nowrap;" title="导出日历格式Excel">📊 Excel</button>
         <button onclick="exportImage()" style="padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);white-space:nowrap;" title="导出当前月历为图片">📸 图片</button>
       </div>
 
@@ -1465,17 +1466,16 @@ const holidays = new Set([
   '2026-04-06','2026-04-05',
   '2026-05-01','2026-05-02','2026-05-03','2026-05-04','2026-05-05',
   '2026-06-19','2026-06-20','2026-06-21',
-  '2026-09-25','2026-09-26','2026-09-27',
-  '2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07','2026-10-08',
+  '2026-09-25',
+  '2026-10-01','2026-10-02','2026-10-03','2026-10-04','2026-10-05','2026-10-06','2026-10-07',
 ]);
 
 const makeupDays = new Set([
   '2026-01-25','2026-02-08',
   '2026-04-26',
+  '2026-09-20',
   '2026-05-10',
-  '2026-09-27',
   '2026-10-10',
-  '2026-10-11',
 ]);
 
 function isWeekend(d) {
@@ -1606,193 +1606,128 @@ function hasLongHoliday(start, end) {
   return maxStreak >= 4;
 }
 
-// ===== 版本自动生成：每月2版，版本号 = S{月}-{序号} =====
-let startBrdDate = '2026-06-16';
+// ===== 版本自动生成 — BRD 每两周周四，先定发版日再倒推 =====
+let startBrdDate = '2026-06-04';
+const SINGLE_VERSION_MONTHS = new Set([0, 1, 4, 5, 9, 10]); // 8(Sep)改为双版
+function nextMonday(d) { let cur = new Date(d); while (cur.getDay() !== 1) cur = addDays(cur, 1); return cur; }
+function nextBRDThursday(prev) { let d = addDays(prev, 14); while (d.getDay() !== 4) d = addDays(d, 1); return d; }
 
-// 单版本微调：{ 版本名: { brdBias?: -1, prdIntBias?: -1, prdOrderBias?: -1 } }
-const versionOverrides = {
-  'S7-1': { brdBias: -1 }, // BRD终评提前1工作日
-};
-
-function applyOverride(name, key, baseVal) {
-  const ov = versionOverrides[name];
-  if (!ov || ov[key] === undefined) return baseVal;
-  return Math.max(0, baseVal + ov[key]);
+// 找到目标发版日
+function findTargetLaunch(m, type) {
+  const yr = 2026;
+  if (type === 'end') {
+    let d = new Date(yr, m + 1, 0);
+    while (!isWorkday(d) || isNoReleaseDate(d)) d = addDays(d, -1);
+    return d;
+  } else {
+    let d = new Date(yr, m, 15);
+    let fwd = new Date(d), bwd = new Date(d); while (fwd.getDay() !== 2) fwd = addDays(fwd, 1); while (bwd.getDay() !== 2) bwd = addDays(bwd, -1); d = (d - bwd < fwd - d) ? bwd : fwd; // 最接近15号的周二
+    if (isNoReleaseDate(d)) d = addDays(d, 7);
+    return d;
+  }
 }
 
-function buildOneVersion(brdDateStr, targetDay, verName) {
+function buildOneVersion(brdDateStr, targetLaunch) {
   let brdInit = new Date(brdDateStr + 'T00:00:00');
   if (!isWorkday(brdInit)) brdInit = ensureWorkday(brdInit);
 
-  let best = null;
+  const brdFinal      = addWorkdays(brdInit, 2);
+  const prdInitInt    = addWorkdays(brdFinal, 1);
+  const prdFinalOrder = nextMonday(prdInitInt);
+  const prdFinalSearch = addWorkdays(prdFinalOrder, 1);
+  const prdFinalInt   = new Date(prdFinalSearch);
+  const schedule      = addWorkdays(prdFinalSearch, 2);
+  const devStart      = addWorkdays(schedule, 1);
 
-  for (let squeeze = 0; squeeze <= 2; squeeze++) {
-    let brdBias = squeeze >= 1 ? 2 : 3;
-    let prdIntBias = squeeze >= 2 ? 0 : 1;
-    let prdOrderBias = squeeze >= 1 ? 1 : 2;
-    if (verName) {
-      brdBias = applyOverride(verName, 'brdBias', brdBias);
-      prdIntBias = applyOverride(verName, 'prdIntBias', prdIntBias);
-      prdOrderBias = applyOverride(verName, 'prdOrderBias', prdOrderBias);
-    }
+  // 从目标发版日倒推
+  let launch = targetLaunch;
+  const huaweiIosReview = new Date(launch);
+  const androidReview   = addWorkdays(huaweiIosReview, -1);
+  // 灰度 & 回归倒推
+  const grayEnd   = addDays(androidReview, -1);
+  let grayStart = addDays(grayEnd, -1);
+  let day3 = addDays(grayEnd, 1);
+  while (!isWorkday(day3) || isHoliday(day3)) { grayEnd = day3; grayStart = addDays(grayEnd, -1); day3 = addDays(grayEnd, 1); }
+  const regressionEnd   = addWorkdays(grayStart, -1);
+  const regressionStart = addWorkdays(regressionEnd, -1);
+  const integrationEnd  = addWorkdays(regressionStart, -1);
+  const testEnd         = addWorkdays(integrationEnd, -1);
 
-    const brdFinal      = addWorkdays(brdInit, brdBias);
-    const prdInitInt    = new Date(brdFinal);
-    const prdFinalInt   = prdIntBias ? addWorkdays(prdInitInt, prdIntBias) : new Date(prdInitInt);
-    const prdFinalOrder = addWorkdays(prdFinalInt, prdOrderBias);
-    const prdFinalSearch = addWorkdays(prdFinalOrder, 1);
-    const schedule      = addWorkdays(prdFinalSearch, 1);
-    const devStart      = addWorkdays(schedule, 1);
+  // 开发+测试
+  const availWD = countWorkdays(devStart, testEnd);
+  const poolWD = Math.max(3, availWD - 1);
+  const devDays = Math.max(2, Math.round(poolWD * 2 / 3));
+  const testDays = Math.max(1, poolWD - devDays);
+  const devEnd    = addWorkdays(devStart, devDays - 1);
+  const freezeDate = addWorkdays(devEnd, 1);
+  const testStart = addWorkdays(freezeDate, 1);
+  const devFreeze = new Date(freezeDate);
 
-    let poolWD = 6;
-    let devDays, testDays, devEnd, freezeDate, testStart, testEnd;
-    let integrationEnd, regressionStart, regressionEnd, grayStart, grayEnd;
-    let androidReview, huaweiIosReview, launch;
+  const longHol = hasLongHoliday(devStart, launch);
+  let blocked = hasLongHoliday(schedule, launch);
+  if (!blocked) for (let d = new Date(schedule); d <= launch; d = addDays(d, 1)) { if (isNoReleaseDate(d)) { blocked = true; break; } }
 
-    for (let attempt = 0; attempt < 10; attempt++) {
-      devDays = Math.max(2, Math.round(poolWD * 2 / 3));
-      testDays = Math.max(1, poolWD - devDays);
-      devEnd    = addWorkdays(devStart, devDays - 1);
-      freezeDate = addWorkdays(devEnd, 1);
-      testStart = addWorkdays(freezeDate, 1);
-      testEnd   = addWorkdays(testStart, testDays - 1);
-      integrationEnd = addWorkdays(testEnd, 1);
-      // 回归：往后2个工作日
-      regressionStart = addWorkdays(integrationEnd, 1);
-      regressionEnd   = addWorkdays(regressionStart, 1);
-      // 灰度：回归后下一个自然日开始，2自然日
-      // 第3天若是周末/节假日，向后延伸覆盖至其结束
-      grayStart = addDays(regressionEnd, 1);
-      grayEnd   = addDays(grayStart, 1);
-      let day3 = addDays(grayEnd, 1);
-      while (!isWorkday(day3) || isHoliday(day3)) {
-        grayEnd = day3;
-        day3 = addDays(grayEnd, 1);
-      }
-      androidReview = addWorkdays(grayEnd, 1);
-      huaweiIosReview = addWorkdays(androidReview, 1);
-      launch = huaweiIosReview;
-
-      if (isNoReleaseDate(launch)) { poolWD += 1; continue; }
-      if (androidReview.getMonth() !== launch.getMonth()) { poolWD += 1; continue; }
-      if (hasLongHoliday(addDays(launch, -14), launch)) { poolWD += 2; continue; }
-
-      if (targetDay !== undefined) {
-        const lm = launch.getMonth();
-        const yr = launch.getFullYear();
-        if (targetDay === -1) {
-          const last = new Date(yr, lm + 1, 0);
-          const dist = Math.round((last - launch) / 86400000);
-          if (dist <= 5 && dist >= -2) break;
-          poolWD += (dist > 5) ? 2 : -1;
-        } else {
-          const tgt = new Date(yr, lm, targetDay);
-          const dist = Math.round((launch - tgt) / 86400000);
-          if (Math.abs(dist) <= 5) break;
-          poolWD += (dist > 5) ? -1 : 2;
-        }
-        poolWD = Math.max(2, Math.min(poolWD, 20));
-      } else {
-        break;
-      }
-    }
-
-    // 保存本次 squeeze 结果
-    const devFreeze = new Date(freezeDate);
-    const longHol = hasLongHoliday(devStart, launch);
-    let blocked = hasLongHoliday(schedule, launch);
-    if (!blocked) {
-      for (let d = new Date(schedule); d <= launch; d = addDays(d, 1)) {
-        if (isNoReleaseDate(d)) { blocked = true; break; }
-      }
-    }
-    const cand = { brdInit, brdFinal, prdInitInt, prdFinalInt, prdFinalOrder, prdFinalSearch, schedule,
-      devStart, devEnd, devFreeze, testStart, testEnd, integrationEnd,
-      regressionStart, regressionEnd, grayStart, grayEnd,
-      androidReview, huaweiIosReview, launch,
-      longHol, totalDevTest: devDays + testDays, isMonthly: blocked };
-
-    if (targetDay === undefined) return cand;
-
-    // 达到目标则直接返回
-    const lm = launch.getMonth();
-    const yr = launch.getFullYear();
-    if (targetDay === -1) {
-      const last = new Date(yr, lm + 1, 0);
-      if (Math.round((last - launch) / 86400000) <= 5) return cand;
-    } else {
-      const tgt = new Date(yr, lm, targetDay);
-      if (Math.abs(Math.round((launch - tgt) / 86400000)) <= 5) return cand;
-    }
-
-    best = cand;
-    // 未达标，继续下一级 squeeze
-  }
-
-  return best; // fallback
+  return { brdInit, brdFinal, prdInitInt, prdFinalInt, prdFinalOrder, prdFinalSearch, schedule,
+    devStart, devEnd, devFreeze, testStart, testEnd, integrationEnd,
+    regressionStart, regressionEnd, grayStart, grayEnd,
+    androidReview, huaweiIosReview, launch,
+    longHol, totalDevTest: devDays + testDays, isMonthly: blocked };
 }
+
 function buildVersions() {
   const versions = [];
-  let chainDate = startBrdDate;
-  let prevLaunch = null;
-  const maxMonth = 11;
+  const pushVer = (v) => { const lm = v.launch.getMonth(); const cnt = versions.filter(x => x.launch.getMonth() === lm).length + 1; v.name = `S${lm + 1}-${cnt}`; versions.push(v); };
 
-  for (let m = new Date(startBrdDate).getMonth(); m <= maxMonth; ) {
-    let seq = 0;
-    while (seq < 2) {
-      const tentativeName = `S${m + 1}-${seq + 1}`;
-      const v = buildOneVersion(chainDate, seq === 0 ? 15 : -1, tentativeName);
-      let lm = v.launch.getMonth();
+  // S7-1: BRD 6/4, 月中
+  pushVer(buildOneVersion('2026-06-04', findTargetLaunch(6, 'mid')));  // S7-1
+  // S7-2: BRD 6/18, 月末
+  pushVer(buildOneVersion('2026-06-18', findTargetLaunch(6, 'end')));  // S7-2
 
-      // 两次发版至少隔13个自然日
-      if (prevLaunch) {
-        const gap = Math.round((v.launch - prevLaunch) / 86400000);
-        if (gap < 13) {
-          v.launch = ensureWorkday(addDays(prevLaunch, 13));
-          while (isNoReleaseDate(v.launch)) { v.launch = addDays(v.launch, 1); v.launch = ensureWorkday(v.launch); }
-          lm = v.launch.getMonth();
-          // 正向重算：从现有 devEnd 出发，紧密排列
-          const fz = addWorkdays(v.devEnd, 1);
-          v.devFreeze = new Date(fz);
-          v.testStart = addWorkdays(fz, 1);
-          const td2 = Math.max(1, Math.round(v.totalDevTest * 1/3));
-          v.testEnd = addWorkdays(v.testStart, td2 - 1);
-          v.integrationEnd = addWorkdays(v.testEnd, 1);
-          v.regressionStart = addWorkdays(v.integrationEnd, 1);
-          v.regressionEnd = addWorkdays(v.regressionStart, 1);
-          v.grayStart = addDays(v.regressionEnd, 1);
-          v.grayEnd = addDays(v.grayStart, 1);
-          let d3 = addDays(v.grayEnd, 1);
-          while (!isWorkday(d3) || isHoliday(d3)) { v.grayEnd = d3; d3 = addDays(v.grayEnd, 1); }
-          v.androidReview = addWorkdays(v.grayEnd, 1);
-          v.huaweiIosReview = addWorkdays(v.androidReview, 1);
-          v.launch = v.huaweiIosReview;
-          lm = v.launch.getMonth();
-        }
-      }
-      if (lm > m && seq === 0) { m = lm - 1; break; }  // -1 抵消 m++，下轮处理正确月份
-      if (lm > m) break;
+  // S8-1: BRD 7/2, 月中
+  pushVer(buildOneVersion('2026-07-02', findTargetLaunch(7, 'mid')));  // S8-1
+  // S8-2: BRD 7/16, 月末
+  pushVer(buildOneVersion('2026-07-16', findTargetLaunch(7, 'end')));  // S8-2
 
-      seq++;
-      const cntInMonth = versions.filter(x => x.launch.getMonth() === lm).length + 1;
-      v.name = `S${lm + 1}-${cntInMonth}`;
-      versions.push(v);
-      prevLaunch = v.launch;
-      chainDate = fmt(v.devFreeze);
-    }
-    m++;
-  }
+  // S9-1: BRD 7/30, 月中
+  pushVer(buildOneVersion('2026-07-30', findTargetLaunch(8, 'mid')));  // S9-1
+  // S9-2: BRD 8/13, iOS 特殊 → 10/9
+  { const v = buildOneVersion('2026-08-13', ensureWorkday(new Date('2026-10-09'))); v.name = 'S9-2'; versions.push(v); }
+
+  // S10-1: BRD 8/27, 月末（单版月）
+  { const v = buildOneVersion('2026-08-27', findTargetLaunch(9, 'end')); v.name = 'S10-1'; versions.push(v); }
+
+  // S11-1: BRD 10/22（用户指定）, 月末
+  pushVer(buildOneVersion('2026-10-22', findTargetLaunch(10, 'end')));  // S11-1
+
+  // S12-1: BRD 11/5, 月中
+  pushVer(buildOneVersion('2026-11-05', findTargetLaunch(11, 'mid')));  // S12-1
+  // S12-2: BRD 11/19, 月末
+  pushVer(buildOneVersion('2026-11-19', findTargetLaunch(11, 'end')));  // S12-2
 
   return versions;
 }
-
 let allVersions;
 let eventMap = {};
+
+// 版本颜色表（自动生成，每版一色）
+const VERSION_HUES = {};
+function getVerColor(ver) {
+  if (!VERSION_HUES[ver]) {
+    const idx = Object.keys(VERSION_HUES).length;
+    VERSION_HUES[ver] = `hsl(${(idx * 47 + 200) % 360}, 70%, 88%)`; // 柔和背景色
+  }
+  return VERSION_HUES[ver];
+}
+function getVerTextColor(ver) {
+  if (!VERSION_HUES[ver]) getVerColor(ver);
+  const hue = parseInt(VERSION_HUES[ver].match(/\d+/)[0]);
+  return `hsl(${hue}, 50%, 25%)`;
+}
 
 function addEvent(d, label, cls, ver) {
   const k = fmt(d);
   if (!eventMap[k]) eventMap[k] = [];
-  eventMap[k].push({label, cls, ver});
+  eventMap[k].push({label, cls, ver, color: getVerColor(ver), textColor: getVerTextColor(ver)});
 }
 
 function buildEventMap() {
@@ -2119,7 +2054,8 @@ function makeCell(date, otherMonth, today) {
   // 平铺排放，最多4条
   uniqueEvs.slice(0, 4).forEach(ev => {
     const el = document.createElement('div');
-    el.className = `event ${ev.cls}`;
+    el.className = 'event';
+    el.style.cssText = `background:${ev.color || 'var(--color-surface-alt)'};color:${ev.textColor || 'var(--color-text-secondary)'};font-weight:500;`;
     el.textContent = ev.label;
     el.title = ev.label;
     cell.appendChild(el);
@@ -2786,6 +2722,65 @@ function buildExportCellHTML(date, otherMonth, today, verName) {
     inner += `<div class="event ${e.cls}" style="font-size:11px;font-weight:500;padding:2px 5px;border-radius:3px;margin-bottom:2px;line-height:1.5;white-space:normal;word-break:break-all">${e.label}</div>`;
   });
   return `<div class="${cls.join(' ')}" style="min-height:auto;height:auto;border-radius:6px;border:1px solid transparent;padding:4px;background:#fff;display:flex;flex-direction:column">${inner}</div>`;
+}
+
+// ===== 导出 Excel 日历格式 =====
+function exportExcel() {
+  const allMonths = [];
+  if (allVersions.length === 0) return;
+  const startM = allVersions[0].brdInit.getMonth();
+  const endM = allVersions[allVersions.length - 1].launch.getMonth();
+  const year = allVersions[0].brdInit.getFullYear();
+
+  for (let m = startM; m <= endM; m++) {
+    let html = `<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;font-family:'Microsoft YaHei',sans-serif;font-size:11px;width:100%">`;
+    html += `<tr><th colspan="7" style="background:#2563EB;color:#fff;font-size:14px;padding:8px">1号会员店发版日历 — ${year}年${m+1}月</th></tr>`;
+    html += `<tr style="background:#E2E8F0">${['日','一','二','三','四','五','六'].map(d => `<th style="width:14%;padding:4px">${d}</th>`).join('')}</tr>`;
+
+    const firstDay = new Date(year, m, 1);
+    const lastDay = new Date(year, m+1, 0);
+    const startDow = firstDay.getDay();
+    let cells = '';
+
+    // 前填充
+    for (let i = 0; i < startDow; i++) cells += '<td style="background:#F1F5F9;color:#94A3B8"></td>';
+    // 当月
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const date = new Date(year, m, d);
+      const evs = (eventMap[fmt(date)] || []);
+      const bg = isHoliday(date) ? '#FFFBEB' : (isWeekend(date) && !isMakeup(date)) ? '#FAFBFC' : '#fff';
+      let inner = `<b>${d}</b>`;
+      const seen = new Set();
+      evs.forEach(e => {
+        const k = e.label + e.ver;
+        if (seen.has(k)) return; seen.add(k);
+        const bgc = getVerColor(e.ver);
+        const tc = getVerTextColor(e.ver);
+        inner += `<br><div style="background:${bgc};color:${tc};padding:2px 4px;border-radius:2px;margin:1px 0;font-size:10px">${e.label}</div>`;
+      });
+      cells += `<td style="vertical-align:top;background:${bg};padding:4px;min-height:60px">${inner}</td>`;
+    }
+    // 后填充
+    const total = startDow + lastDay.getDate();
+    const rem = (7 - (total % 7)) % 7;
+    for (let i = 1; i <= rem; i++) cells += '<td style="background:#F1F5F9;color:#94A3B8"></td>';
+
+    // 按周切行
+    const cellArr = cells.match(/<td[^>]*>[\s\S]*?<\/td>/g) || [];
+    let rows = '';
+    for (let i = 0; i < cellArr.length; i += 7) {
+      rows += '<tr>' + cellArr.slice(i, i+7).join('') + '</tr>';
+    }
+    html += rows + '</table><br>';
+    allMonths.push(html);
+  }
+
+  const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>发版日历</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>${allMonths.join('')}</body></html>`;
+  const blob = new Blob([fullHtml], {type:'application/vnd.ms-excel;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `发版日历_${year}.xls`;
+  a.click();
 }
 
 // ===== 导出 CSV =====
