@@ -2315,6 +2315,73 @@ function detectConflicts() {
   return conflicts;
 }
 
+// 环节名 → 版本对象字段 映射
+const PHASE_MAP = {
+  'brdFinal': 'brdFinal', 'prdInit': 'prdInitInt',
+  'prdFinalOrder': 'prdFinalOrder', 'prdFinalSearch': 'prdFinalSearch',
+  'schedule': 'schedule', 'devStart': 'devStart', 'devEnd': 'devEnd',
+  'devFreeze': 'devFreeze', 'testStart': 'testStart', 'testEnd': 'testEnd',
+  'integration': 'integrationEnd', 'regressionStart': 'regressionStart',
+  'grayStart': 'grayStart', 'android': 'androidReview', 'launch': 'launch',
+};
+
+// 正常排期：给定版本名 + 开始/结束日期，生成一个完整版本并替换/插入
+function generateScheduleVersion(version, startDate, endDate) {
+  const v = buildOneVersion(startDate, new Date(endDate + 'T00:00:00'));
+  v.name = version;
+  const idx = allVersions.findIndex(x => x.name === version);
+  if (idx >= 0) allVersions[idx] = v; else allVersions.push(v);
+  return v;
+}
+
+// 修改调整：锁定 BRD初评 + iOS发版，只改指定环节日期，重算下游
+function adjustScheduleVersion(version, phase, date) {
+  const v = allVersions.find(x => x.name === version);
+  if (!v) return null;
+  const field = PHASE_MAP[phase];
+  if (!field) return null;
+
+  const lockedBrd = v.brdInit;        // 锚点1：BRD初评不变
+  const lockedLaunch = v.launch;      // 锚点2：iOS发版不变
+
+  // 用锁定锚点重新生成标准版本
+  const rebuilt = buildOneVersion(fmt(lockedBrd), lockedLaunch);
+  rebuilt.name = version;
+
+  // 将用户指定的环节覆盖为新日期
+  rebuilt[field] = new Date(date + 'T00:00:00');
+
+  // 前置链条正向重算（brdFinal → devStart）
+  if (['brdFinal','prdInitInt','prdFinalOrder','prdFinalSearch','schedule','devStart'].includes(field)) {
+    if (field === 'brdFinal' || field === 'prdInitInt') {
+      rebuilt.prdFinalOrder = nextMonday(rebuilt.prdInitInt);
+      rebuilt.prdFinalSearch = addWorkdays(rebuilt.prdFinalOrder, 1);
+      rebuilt.prdFinalInt = new Date(rebuilt.prdFinalSearch);
+    }
+    if (field !== 'schedule' && field !== 'devStart') {
+      rebuilt.schedule = addWorkdays(rebuilt.prdFinalSearch, 2);
+      rebuilt.devStart = addWorkdays(rebuilt.schedule, 1);
+    } else if (field === 'schedule') {
+      rebuilt.devStart = addWorkdays(rebuilt.schedule, 1);
+    }
+    // 从 devStart 到 launch 重算 dev+test
+    const te = addWorkdays(rebuilt.launch, -3); // 粗略倒推测试结束
+    const awd = countWorkdays(rebuilt.devStart, te);
+    const pw = Math.max(3, awd - 1);
+    const dd = Math.max(2, Math.round(pw*2/3));
+    const td = Math.max(1, pw-dd);
+    rebuilt.devEnd = addWorkdays(rebuilt.devStart, dd-1);
+    rebuilt.devFreeze = new Date(addWorkdays(rebuilt.devEnd, 1));
+    rebuilt.testStart = addWorkdays(rebuilt.devFreeze, 1);
+    rebuilt.testEnd = addWorkdays(rebuilt.testStart, td-1);
+    rebuilt.totalDevTest = dd+td;
+  }
+
+  const idx = allVersions.findIndex(x => x.name === version);
+  if (idx >= 0) allVersions[idx] = rebuilt; else allVersions.push(rebuilt);
+  return rebuilt;
+}
+
 async function loadConversations() {
   try {
     const r = await fetch(API + '/api/conversations');
@@ -2572,6 +2639,8 @@ const TOOLS = [
   { type: 'function', function: { name: 'analyze_holiday', description: '分析指定假期区间对排期的影响（哪些版本受影响、是否需要延期）', parameters: { type: 'object', properties: { start: { type: 'string', description: '假期开始日期 YYYY-MM-DD' }, end: { type: 'string', description: '假期结束日期 YYYY-MM-DD' } }, required: ['start', 'end'] } } },
   { type: 'function', function: { name: 'get_preference', description: '读取用户的长期偏好设置', parameters: { type: 'object', properties: { key: { type: 'string', description: '偏好键名，不填则返回全部' } }, required: [] } } },
   { type: 'function', function: { name: 'set_preference', description: '保存用户长期偏好（如排期约束、负责人等），下次对话自动记住', parameters: { type: 'object', properties: { key: { type: 'string', description: '偏好键名' }, value: { type: 'string', description: '偏好值' } }, required: ['key', 'value'] } } },
+  { type: 'function', function: { name: 'generate_schedule', description: '正常排期：给定版本号、BRD初评开始日期、iOS发版结束日期，按排期规则生成完整排期', parameters: { type: 'object', properties: { version: { type: 'string', description: '版本号如 S10-2' }, startDate: { type: 'string', description: 'BRD初评日期 YYYY-MM-DD' }, endDate: { type: 'string', description: 'iOS发版日期 YYYY-MM-DD' } }, required: ['version', 'startDate', 'endDate'] } } },
+  { type: 'function', function: { name: 'adjust_schedule', description: '修改调整：锁定BRD初评和iOS发版不变，只调整指定环节日期，自动更新日历。环节可选：brdFinal/prdInit/prdFinalOrder/prdFinalSearch/schedule/devStart', parameters: { type: 'object', properties: { version: { type: 'string', description: '版本号如 S9-2' }, phase: { type: 'string', description: '环节名，如 devStart、schedule、brdFinal' }, date: { type: 'string', description: '新日期 YYYY-MM-DD' } }, required: ['version', 'phase', 'date'] } } },
 ];
 
 async function executeTool(name, input) {
@@ -2650,6 +2719,24 @@ async function executeTool(name, input) {
         body: JSON.stringify({ key: input.key, value: input.value }),
       }).catch(() => {});
       return `已记住偏好：${input.key} = ${input.value}`;
+    }
+    case 'generate_schedule': {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(input.startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(input.endDate)) {
+        return '日期格式错误，请使用 YYYY-MM-DD';
+      }
+      const v = generateScheduleVersion(input.version, input.startDate, input.endDate);
+      buildEventMap();
+      renderTabs(); renderCal(); renderDetail();
+      return `${input.version} 排期已生成：BRD初评 ${fmtCN(v.brdInit)} → iOS发版 ${fmtCN(v.launch)}，共 ${v.totalDevTest} 个开发+测试工作日`;
+    }
+    case 'adjust_schedule': {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return '日期格式错误，请使用 YYYY-MM-DD';
+      const v = adjustScheduleVersion(input.version, input.phase, input.date);
+      if (!v) return `调整失败：版本 ${input.version} 不存在或环节 ${input.phase} 无效。可用环节：${Object.keys(PHASE_MAP).join(', ')}`;
+      buildEventMap();
+      renderTabs(); renderCal(); renderDetail();
+      const field = PHASE_MAP[input.phase];
+      return `${input.version} 的「${input.phase}」已调整为 ${input.date}（BRD初评 ${fmtCN(v.brdInit)} 和 iOS发版 ${fmtCN(v.launch)} 保持不变）`;
     }
     default:
       return `未知工具: ${name}`;
