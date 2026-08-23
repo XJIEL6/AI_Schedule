@@ -1335,7 +1335,8 @@ body {
         </select>
         <button onclick="exportCSV()" style="padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);white-space:nowrap;" title="导出CSV">📥 CSV</button>
         <button onclick="exportExcel()" style="padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);white-space:nowrap;" title="导出日历格式Excel">📊 Excel</button>
-        <button onclick="exportImage()" style="padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);white-space:nowrap;" title="导出当前月历为图片">📸 图片</button>
+        <button onclick="exportImage()" style="padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);white-space:nowrap;" title="导出选中版本图片">📸 单版</button>
+        <button onclick="exportAllImages()" style="padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-primary);white-space:nowrap;" title="导出全部版本日历图片">📸 全部</button>
       </div>
 
       <div class="version-tabs" id="versionTabs"></div>
@@ -1451,6 +1452,7 @@ body {
   </div>
 </div>
 
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script>
 /* ================================================================
  *  All JavaScript logic preserved exactly from the original.
@@ -1631,9 +1633,9 @@ function buildOneVersion(brdDateStr, targetLaunch) {
   let brdInit = new Date(brdDateStr + 'T00:00:00');
   if (!isWorkday(brdInit)) brdInit = ensureWorkday(brdInit);
 
-  const brdFinal      = addWorkdays(brdInit, 2);
-  const prdInitInt    = addWorkdays(brdFinal, 1);
-  const prdFinalOrder = nextMonday(prdInitInt);
+  const brdFinal      = addWorkdays(brdInit, 3);   // 隔2个工作日→周二
+  const prdInitInt    = addWorkdays(brdFinal, 2);  // 隔1个工作日→周四
+  const prdFinalOrder = nextMonday(prdInitInt);    // 下一个周一
   const prdFinalSearch = addWorkdays(prdFinalOrder, 1);
   const prdFinalInt   = new Date(prdFinalSearch);
   const schedule      = addWorkdays(prdFinalSearch, 2);
@@ -1680,8 +1682,28 @@ function buildVersions() {
 
   // S7-1: BRD 6/4, 月中
   pushVer(buildOneVersion('2026-06-04', findTargetLaunch(6, 'mid')));  // S7-1
-  // S7-2: BRD 6/18, 月末
-  pushVer(buildOneVersion('2026-06-18', findTargetLaunch(6, 'end')));  // S7-2
+  // S7-2: BRD 6/18, BRD终评=6/23(周二), PRD初评=6/25(周四), iOS不变=7/31
+  { const v = buildOneVersion('2026-06-18', findTargetLaunch(6, 'end'));
+    const origLaunch = v.launch, origDevFreeze = v.devFreeze, origTest = v.totalDevTest;
+    v.brdFinal = new Date('2026-06-23'); v.prdInitInt = new Date('2026-06-25');
+    v.prdFinalOrder = nextMonday(v.prdInitInt); v.prdFinalSearch = addWorkdays(v.prdFinalOrder, 1);
+    v.prdFinalInt = new Date(v.prdFinalSearch); v.schedule = addWorkdays(v.prdFinalSearch, 2);
+    v.devStart = addWorkdays(v.schedule, 1);
+    // 保持原 dev+test 池和 launch 不变，重算中间阶段
+    const tgt = origLaunch; const hw = new Date(tgt); const aw = addWorkdays(hw, -1);
+    const ge = addDays(aw, -1); let gs = addDays(ge, -1);
+    let d3 = addDays(ge, 1); while (!isWorkday(d3) || isHoliday(d3)) { ge = d3; gs = addDays(ge, -1); d3 = addDays(ge, 1); }
+    v.grayStart = gs; v.grayEnd = ge;
+    const re = addWorkdays(gs, -1); const rs = addWorkdays(re, -1);
+    v.regressionStart = rs; v.regressionEnd = re;
+    const ie = addWorkdays(rs, -1); const te = addWorkdays(ie, -1);
+    v.integrationEnd = ie; v.testEnd = te; v.androidReview = aw; v.huaweiIosReview = hw;
+    const awd = countWorkdays(v.devStart, te); const pw = Math.max(3, awd - 1);
+    const dd = Math.max(2, Math.round(pw*2/3)); const td = Math.max(1, pw-dd);
+    v.devEnd = addWorkdays(v.devStart, dd-1); v.devFreeze = new Date(addWorkdays(v.devEnd, 1));
+    v.testStart = addWorkdays(v.devFreeze, 1); v.totalDevTest = dd+td;
+    v.name = 'S7-2'; versions.push(v);
+  }
 
   // S8-1: BRD 7/2, 月中
   pushVer(buildOneVersion('2026-07-02', findTargetLaunch(7, 'mid')));  // S8-1
@@ -2252,6 +2274,46 @@ let chatMessages = [
   {role: 'assistant', content: '你好，我是 AI 排期助手。可以帮你：\n· 查看各版本排期详情\n· 添加或删除假期区间\n· 调整排期基准参数\n· 回答排期相关问题\n\n请问有什么可以帮你的？'}
 ];
 let chatBusy = false;
+let preferences = {}; // Agent 长期记忆
+
+async function loadPreferences() {
+  try {
+    const r = await fetch(API + '/api/preferences');
+    if (r.ok) preferences = await r.json();
+  } catch(e) {}
+}
+
+// Agent 冲突检测：返回结构化冲突列表
+function detectConflicts() {
+  const conflicts = [];
+  const monthCount = {};
+  // 1. 同月版本数检查
+  for (const v of allVersions) {
+    const m = v.launch.getMonth();
+    monthCount[m] = (monthCount[m] || 0) + 1;
+  }
+  for (const m in monthCount) {
+    const limit = SINGLE_VERSION_MONTHS.has(Number(m)) ? 1 : 2;
+    if (monthCount[m] > limit) {
+      conflicts.push({ type: '同月超版数', detail: `${Number(m)+1}月有 ${monthCount[m]} 版，上限 ${limit}` });
+    }
+  }
+  // 2. 开发/测试同天重叠
+  for (let i = 0; i < allVersions.length; i++) {
+    for (let j = i+1; j < allVersions.length; j++) {
+      const a = allVersions[i], b = allVersions[j];
+      const devDup = !(a.devEnd < b.devStart || a.devStart > b.devEnd);
+      const testDup = !(a.testEnd < b.testStart || a.testStart > b.testEnd);
+      if (devDup) conflicts.push({ type: '开发重叠', detail: `${a.name} 与 ${b.name} 开发日期重叠` });
+      if (testDup) conflicts.push({ type: '测试重叠', detail: `${a.name} 与 ${b.name} 测试日期重叠` });
+    }
+  }
+  // 3. iOS 在禁发日
+  for (const v of allVersions) {
+    if (isNoReleaseDate(v.launch)) conflicts.push({ type: '禁发日冲突', detail: `${v.name} 发版日 ${fmt(v.launch)} 是禁发日期` });
+  }
+  return conflicts;
+}
 
 async function loadConversations() {
   try {
@@ -2455,7 +2517,15 @@ function buildSystemPrompt() {
   const holidaySummary = userHolidays.map(r => `${r.start}~${r.end}`).join(', ') || '无';
   const makeupSummary = userMakeupDays.map(r => `${r.start}~${r.end}`).join(', ') || '无';
 
-  return `你是"1号会员店"2026年发版日历的AI排期助手。你可以通过函数调用来操作排期数据。
+  const prefSummary = Object.keys(preferences).length ? '\n## 用户长期偏好\n' + Object.entries(preferences).map(([k,v]) => `- ${k}: ${v}`).join('\n') : '';
+
+  return `你是"1号会员店"2026年发版日历的AI排期 Agent。你不仅回答，还要像专业排期专家一样主动完成任务。
+
+## 你的工作方式（推理框架）
+遇到排期任务时，遵循「规划→执行→评估」循环：
+1. 规划：先把任务拆成明确步骤（读取现状 → 计算/修改 → 检查冲突 → 汇报）
+2. 执行：按步骤调用函数，每步拿到结果再决定下一步
+3. 评估：修改后主动调用 detect_conflicts 检查是否有冲突，有冲突则调整；无冲突则汇报结果
 
 ## 当前排期（共${allVersions.length}个版本）
 ${scheduleSummary}
@@ -2465,6 +2535,7 @@ ${holidaySummary}
 
 ## 用户自定义调休工作日
 ${makeupSummary}
+${prefSummary}
 
 ## 排期规则
 - 开发+测试长度根据BRD初评和发版日之间的可用工作日动态计算，按2:1分配
@@ -2482,8 +2553,11 @@ ${makeupSummary}
 - list_holidays — 列出所有自定义假期
 - get_schedule — 查看版本排期详情
 - set_start_date — 修改首版BRD初评日期，自动重新生成所有版本
+- detect_conflicts — 检测排期冲突（改完排期后应主动调用）
+- analyze_holiday — 分析假期对排期的影响
+- get_preference / set_preference — 读取/保存用户长期偏好（用户提到的排期偏好应主动记住）
 
-用中文回复，简洁清晰。当用户要求修改排期时，调用相应函数。`;
+用中文回复，简洁清晰。主动完成任务，主动检查冲突，主动记住用户偏好。`;
 }
 
 const TOOLS = [
@@ -2494,9 +2568,13 @@ const TOOLS = [
   { type: 'function', function: { name: 'list_holidays', description: '列出所有用户自定义假期和调休日', parameters: { type: 'object', properties: {}, required: [] } } },
   { type: 'function', function: { name: 'get_schedule', description: '获取指定版本或全部版本的排期详情', parameters: { type: 'object', properties: { version: { type: 'string', description: '版本名如 S7-1，不填则返回全部' } }, required: [] } } },
   { type: 'function', function: { name: 'set_start_date', description: '修改首版BRD初评日期，重新自动生成所有版本', parameters: { type: 'object', properties: { date: { type: 'string', description: 'BRD初评日期 YYYY-MM-DD' } }, required: ['date'] } } },
+  { type: 'function', function: { name: 'detect_conflicts', description: '检测当前排期的冲突（同月超版数、开发/测试重叠、禁发日冲突）', parameters: { type: 'object', properties: {}, required: [] } } },
+  { type: 'function', function: { name: 'analyze_holiday', description: '分析指定假期区间对排期的影响（哪些版本受影响、是否需要延期）', parameters: { type: 'object', properties: { start: { type: 'string', description: '假期开始日期 YYYY-MM-DD' }, end: { type: 'string', description: '假期结束日期 YYYY-MM-DD' } }, required: ['start', 'end'] } } },
+  { type: 'function', function: { name: 'get_preference', description: '读取用户的长期偏好设置', parameters: { type: 'object', properties: { key: { type: 'string', description: '偏好键名，不填则返回全部' } }, required: [] } } },
+  { type: 'function', function: { name: 'set_preference', description: '保存用户长期偏好（如排期约束、负责人等），下次对话自动记住', parameters: { type: 'object', properties: { key: { type: 'string', description: '偏好键名' }, value: { type: 'string', description: '偏好值' } }, required: ['key', 'value'] } } },
 ];
 
-function executeTool(name, input) {
+async function executeTool(name, input) {
   switch (name) {
     case 'add_holiday':
       userHolidays.push({start: input.start, end: input.end});
@@ -2540,6 +2618,38 @@ function executeTool(name, input) {
       startBrdDate = input.date;
       rebuildAll();
       return `起始BRD初评日期已修改为 ${input.date}，版本已自动重新生成（${allVersions.map(v=>v.name).join(', ')}）`;
+    }
+    case 'detect_conflicts': {
+      const conflicts = detectConflicts();
+      if (conflicts.length === 0) return '✅ 当前排期无冲突';
+      return `发现 ${conflicts.length} 个冲突：\n` + conflicts.map(c => `- [${c.type}] ${c.detail}`).join('\n');
+    }
+    case 'analyze_holiday': {
+      const s = new Date(input.start + 'T00:00:00');
+      const e = new Date(input.end + 'T00:00:00');
+      const affected = [];
+      for (const v of allVersions) {
+        const overlap = !(v.launch < s || v.brdInit > e);
+        if (overlap) affected.push(`${v.name}（BRD初评${fmtCN(v.brdInit)}，发版${fmtCN(v.launch)}）`);
+      }
+      const long = hasLongHoliday(s, e) || (Math.round((e - s) / 86400000) + 1) >= 4;
+      const note = long ? '该假期≥4天，会触发排期顺延' : '该假期<4天，不影响排期节奏';
+      if (affected.length === 0) return `该假期(${input.start}~${input.end})不影响任何版本。${note}`;
+      return `假期 ${input.start}~${input.end} 影响以下版本：\n` + affected.join('\n') + `\n${note}`;
+    }
+    case 'get_preference': {
+      if (input.key) return preferences[input.key] !== undefined ? preferences[input.key] : `(未设置 ${input.key})`;
+      const keys = Object.keys(preferences);
+      if (keys.length === 0) return '暂无保存的偏好';
+      return keys.map(k => `${k}: ${preferences[k]}`).join('\n');
+    }
+    case 'set_preference': {
+      preferences[input.key] = input.value;
+      await fetch(API + '/api/preferences', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ key: input.key, value: input.value }),
+      }).catch(() => {});
+      return `已记住偏好：${input.key} = ${input.value}`;
     }
     default:
       return `未知工具: ${name}`;
@@ -2623,7 +2733,7 @@ async function sendChat() {
           const fn = tc.function;
           let args = {};
           try { args = JSON.parse(fn.arguments || '{}'); } catch(e) {}
-          const result = executeTool(fn.name, args);
+          const result = await executeTool(fn.name, args);
           // 单条 tool 消息，含调用参数和结果，带 toolCallId 用于 API 回放
           addChatMsg('tool', `📥 ${JSON.stringify(args)}\n📤 ${result}`, `${fn.name}`);
           // 立即补上 toolCallId
@@ -2706,6 +2816,47 @@ function exportImage(verName) {
   setTimeout(() => w.print(), 800);
 }
 
+// ===== 导出全部版本图片 =====
+function exportAllImages() {
+  if (allVersions.length === 0) return;
+  const year = allVersions[0].brdInit.getFullYear();
+  const startM = allVersions[0].brdInit.getMonth();
+  const endM = allVersions[allVersions.length - 1].launch.getMonth();
+  const today = new Date();
+  const styles = Array.from(document.querySelectorAll('style')).map(s => s.outerHTML).join('\n');
+
+  let monthsHtml = '';
+  for (let m = startM; m <= endM; m++) {
+    monthsHtml += `<h3 style="text-align:center;margin:16px 0 8px;page-break-before:${m>startM?'always':'auto'}">1号会员店发版日历 — ${year}年${m+1}月</h3>`;
+    monthsHtml += '<div class="calendar-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;background:#fff;border-radius:10px;border:1px solid #E2E8F0;padding:8px">';
+    monthsHtml += ['日','一','二','三','四','五','六'].map(d => `<div class="cal-header" style="text-align:center;font-size:12px;font-weight:600;color:#64748B;padding:8px">${d}</div>`).join('');
+
+    const firstDay = new Date(year, m, 1);
+    const lastDay = new Date(year, m+1, 0);
+    const startDow = firstDay.getDay();
+    for (let i = 0; i < startDow; i++) {
+      monthsHtml += buildExportCellHTML(new Date(year, m, 1 - (startDow - i)), true, today, null);
+    }
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      monthsHtml += buildExportCellHTML(new Date(year, m, d), false, today, null);
+    }
+    const total = startDow + lastDay.getDate();
+    const rem = (7 - (total % 7)) % 7;
+    for (let i = 1; i <= rem; i++) {
+      monthsHtml += buildExportCellHTML(new Date(year, m+1, i), true, today, null);
+    }
+    monthsHtml += '</div>';
+  }
+
+  const w = window.open('', '_blank', 'width=1400,height=1000');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>发版日历全部版本</title>${styles}
+<style>.event{white-space:normal!important;overflow:visible!important;text-overflow:unset!important;word-break:break-all;font-size:11px!important}.cal-day{min-height:auto!important;height:auto!important;padding:4px!important}.cal-day.other-month{opacity:0.25!important}@media print{.cal-day{border:0.5px solid #E2E8F0!important}}</style>
+</head><body style="background:#fff;padding:20px;font-family:'PingFang SC','Microsoft YaHei',sans-serif;">${monthsHtml}</body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 800);
+}
+
 function buildExportCellHTML(date, otherMonth, today, verName) {
   const cls = ['cal-day'];
   if (otherMonth) cls.push('other-month');
@@ -2714,73 +2865,85 @@ function buildExportCellHTML(date, otherMonth, today, verName) {
   if (fmt(date) === fmt(today)) cls.push('today');
 
   let inner = `<div class="day-num${isHoliday(date)?' holiday-num':''}" style="font-size:11px;font-weight:500;color:#64748B;margin-bottom:3px">${date.getDate()}</div>`;
-  const evs = (eventMap[fmt(date)] || []).filter(e => e.ver === verName);
+  const evs = verName ? (eventMap[fmt(date)] || []).filter(e => e.ver === verName) : (eventMap[fmt(date)] || []);
   const seen = new Set();
   evs.forEach(e => {
-    const key = e.label + e.cls;
+    const key = e.label + e.ver;
     if (seen.has(key)) return; seen.add(key);
-    inner += `<div class="event ${e.cls}" style="font-size:11px;font-weight:500;padding:2px 5px;border-radius:3px;margin-bottom:2px;line-height:1.5;white-space:normal;word-break:break-all">${e.label}</div>`;
+    const bg = e.color || '#E2E8F0';
+    const tc = e.textColor || '#374151';
+    inner += `<div style="background:${bg};color:${tc};font-size:11px;font-weight:500;padding:2px 5px;border-radius:3px;margin-bottom:2px;line-height:1.5;white-space:normal;word-break:break-all">${e.label}</div>`;
   });
   return `<div class="${cls.join(' ')}" style="min-height:auto;height:auto;border-radius:6px;border:1px solid transparent;padding:4px;background:#fff;display:flex;flex-direction:column">${inner}</div>`;
 }
 
-// ===== 导出 Excel 日历格式 =====
+// ===== 导出 xlsx 日历格式 =====
 function exportExcel() {
-  const allMonths = [];
-  if (allVersions.length === 0) return;
+  if (allVersions.length === 0 || typeof XLSX === 'undefined') { alert('XLSX库加载中，请稍后再试'); return; }
+  const year = allVersions[0].brdInit.getFullYear();
   const startM = allVersions[0].brdInit.getMonth();
   const endM = allVersions[allVersions.length - 1].launch.getMonth();
-  const year = allVersions[0].brdInit.getFullYear();
+  const wb = XLSX.utils.book_new();
 
   for (let m = startM; m <= endM; m++) {
-    let html = `<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;font-family:'Microsoft YaHei',sans-serif;font-size:11px;width:100%">`;
-    html += `<tr><th colspan="7" style="background:#2563EB;color:#fff;font-size:14px;padding:8px">1号会员店发版日历 — ${year}年${m+1}月</th></tr>`;
-    html += `<tr style="background:#E2E8F0">${['日','一','二','三','四','五','六'].map(d => `<th style="width:14%;padding:4px">${d}</th>`).join('')}</tr>`;
-
     const firstDay = new Date(year, m, 1);
     const lastDay = new Date(year, m+1, 0);
     const startDow = firstDay.getDay();
-    let cells = '';
+    const totalDays = lastDay.getDate();
+    const weeks = Math.ceil((startDow + totalDays) / 7);
 
-    // 前填充
-    for (let i = 0; i < startDow; i++) cells += '<td style="background:#F1F5F9;color:#94A3B8"></td>';
-    // 当月
-    for (let d = 1; d <= lastDay.getDate(); d++) {
-      const date = new Date(year, m, d);
-      const evs = (eventMap[fmt(date)] || []);
-      const bg = isHoliday(date) ? '#FFFBEB' : (isWeekend(date) && !isMakeup(date)) ? '#FAFBFC' : '#fff';
-      let inner = `<b>${d}</b>`;
-      const seen = new Set();
-      evs.forEach(e => {
-        const k = e.label + e.ver;
-        if (seen.has(k)) return; seen.add(k);
-        const bgc = getVerColor(e.ver);
-        const tc = getVerTextColor(e.ver);
-        inner += `<br><div style="background:${bgc};color:${tc};padding:2px 4px;border-radius:2px;margin:1px 0;font-size:10px">${e.label}</div>`;
-      });
-      cells += `<td style="vertical-align:top;background:${bg};padding:4px;min-height:60px">${inner}</td>`;
-    }
-    // 后填充
-    const total = startDow + lastDay.getDate();
-    const rem = (7 - (total % 7)) % 7;
-    for (let i = 1; i <= rem; i++) cells += '<td style="background:#F1F5F9;color:#94A3B8"></td>';
+    // 标题行 + 表头 + 数据行
+    const aoa = [];
+    aoa.push([{v: `1号会员店发版日历 — ${year}年${m+1}月`, t:'s'}]);
+    aoa.push(['日','一','二','三','四','五','六']);
 
-    // 按周切行
-    const cellArr = cells.match(/<td[^>]*>[\s\S]*?<\/td>/g) || [];
-    let rows = '';
-    for (let i = 0; i < cellArr.length; i += 7) {
-      rows += '<tr>' + cellArr.slice(i, i+7).join('') + '</tr>';
+    for (let w = 0; w < weeks; w++) {
+      const row = [];
+      for (let c = 0; c < 7; c++) {
+        const dayNum = w * 7 + c - startDow + 1;
+        if (dayNum < 1 || dayNum > totalDays) { row.push(''); continue; }
+        const date = new Date(year, m, dayNum);
+        const evs = (eventMap[fmt(date)] || []);
+        const seen = new Set();
+        let cellText = `${dayNum}`;
+        evs.forEach(e => {
+          const k = e.label + e.ver;
+          if (seen.has(k)) return; seen.add(k);
+          cellText += '\n' + e.label;
+        });
+        row.push(cellText);
+      }
+      aoa.push(row);
     }
-    html += rows + '</table><br>';
-    allMonths.push(html);
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+    // 合并标题行
+    ws['!merges'] = [{s:{r:0,c:0}, e:{r:0,c:6}}];
+    // 标题样式
+    ws.A1 = {v: ws.A1.v, t:'s', s:{font:{bold:true,sz:14,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'2563EB'}},alignment:{horizontal:'center',vertical:'center'}}};
+    // 表头样式
+    for (let c = 0; c < 7; c++) {
+      const addr = XLSX.utils.encode_cell({r:1,c});
+      ws[addr].s = {font:{bold:true,sz:11},fill:{fgColor:{rgb:'E2E8F0'}},alignment:{horizontal:'center'}};
+    }
+    // 数据行样式（换行+顶对齐）
+    for (let r = 2; r < aoa.length; r++) {
+      for (let c = 0; c < 7; c++) {
+        const addr = XLSX.utils.encode_cell({r,c});
+        if (ws[addr] && ws[addr].v) {
+          ws[addr].s = {alignment:{wrapText:true,vertical:'top'},font:{sz:10}};
+        }
+      }
+    }
+    ws['!cols'] = Array(7).fill({wch: 26});
+    ws['!rows'] = [{hpx: 30}, {hpx: 22}];
+    for (let r = 2; r < aoa.length; r++) ws['!rows'][r] = {hpx: 85};
+
+    XLSX.utils.book_append_sheet(wb, ws, `${m+1}月`);
   }
 
-  const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>发版日历</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>${allMonths.join('')}</body></html>`;
-  const blob = new Blob([fullHtml], {type:'application/vnd.ms-excel;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `发版日历_${year}.xls`;
-  a.click();
+  XLSX.writeFile(wb, `发版日历_${year}.xlsx`);
 }
 
 // ===== 导出 CSV =====
@@ -2832,6 +2995,7 @@ async function sendReminder() {
 (async function init() {
   await loadFromServer();
   loadEmailConfig();
+  await loadPreferences();
   await loadConversations();
   renderPersonEditor();
   allVersions = buildVersions();

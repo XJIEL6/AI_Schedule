@@ -175,6 +175,25 @@ try {
   console.log('[Cron] 每日 8:00 邮件提醒已启动');
 } catch(e) { console.log('[Cron] 跳过（可选）'); }
 
+// ── 用户偏好（Agent 长期记忆）──
+app.get('/api/preferences', async (_req, res) => {
+  const rows = await prisma.userPreference.findMany();
+  const obj = {};
+  rows.forEach(r => obj[r.key] = r.value);
+  res.json(obj);
+});
+
+app.post('/api/preferences', async (req, res) => {
+  const { key, value } = req.body;
+  if (!key) return res.status(400).json({ error: '缺少 key' });
+  await prisma.userPreference.upsert({
+    where: { key },
+    update: { value: String(value) },
+    create: { key, value: String(value) },
+  });
+  res.json({ ok: true });
+});
+
 // ── 健康检查 ──
 app.get('/api/health', async (_req, res) => {
   const vCnt = await prisma.version.count();

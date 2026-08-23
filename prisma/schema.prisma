@@ -65,3 +65,12 @@ model ChatMessage {
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz()
   @@map("chat_messages")
 }
+
+// 用户长期偏好（Agent 记忆层）
+model UserPreference {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique @db.VarChar(100)
+  value     String   @db.Text
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  @@map("user_preferences")
+}

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(node --check _tmp_script.js)",
+      "Bash(rm _tmp_script.js)",
+      "Bash(start \"\" \"http://localhost:3456\")"
+    ]
+  }
+}
